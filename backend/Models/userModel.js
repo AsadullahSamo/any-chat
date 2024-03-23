@@ -3,6 +3,9 @@ const mongoose = require("mongoose");
 
 
 const userSchema = new mongoose.Schema({        // In this schema, we can define the properties we want to have for our model
+    socketId: {
+        type: String,
+    },
     name: {
         type: String,
     },
@@ -14,7 +17,18 @@ const userSchema = new mongoose.Schema({        // In this schema, we can define
     time: {
         type: String,
     },
-    
+    joined: {
+        type: Boolean,
+    },
+    isJoined: {
+        type: Boolean,
+    },
+    specific: {
+        type: Boolean,
+    }, 
+    receiver: {
+        type: String,
+    },
 })
 
 
