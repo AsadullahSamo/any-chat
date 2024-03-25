@@ -27,7 +27,8 @@ export default function Connected() {
     const sendRef = useRef(null);
 
     const [emojis, setEmojis] = useState([]);
-    // const [isDataLoaded, setIsDataLoaded] = useState(false);
+    // const [randomColor, setRandomColor] = useState('bg-gray-500');
+    const [connectedUsers, setConnectedUsers] = useState([])
     const [nickname, setNickname] = useState(router.query.query); // ['nickname']
     const [id, setId] = useState('');
     const [checkId, setCheckId] = useState('');
@@ -40,14 +41,7 @@ export default function Connected() {
     const [data, setData] = useState([{name: '', message: '', time: '', joined: false}]);
     // let [sendClicked, setSendClicked] = useState(0);
     let [socket, setSocket] = useState(null);
-
-    const handleDialogClose = () => {
-      setOpen(false);
-    }
-    const handleDialogOpen = (name) => {
-      setName(name);
-      setOpen(true);
-    }
+    let [pageReload, setPageReload] = useState(false)
 
     useEffect(() => {
       fetch(`http://localhost:8000/users/${nickname}`)
@@ -55,13 +49,11 @@ export default function Connected() {
       .then(data => setData(data))
     }, [data])
 
-    // useEffect(() => {
-    //   if (!socket) return;
-    //   fetch(`http://localhost:8000/users/${nickname}`)
-    //     .then(res => res.json())
-    //     .then(newData => setData(prevData => [...prevData, newData]))
-    //     .catch(error => console.error('Error fetching user data:', error));
-    // }, [sendClicked])
+    useEffect(() => {
+      fetch(`http://localhost:8000/users`)
+      .then(res => res.json())
+      .then(data => setConnectedUsers(data))
+    }, [connectedUsers])
 
     useEffect(() => {
       setNickname(router.query.query);
@@ -74,25 +66,41 @@ export default function Connected() {
       .then(data => setEmojis(data))
     }, []);    
 
+    useEffect(() => {
+      window.addEventListener('beforeunload', (e) => {
+        e.preventDefault();
+        socket.emit('user-disconnected', pageReload)
+      })
+    }, [])
+
+
 		useEffect(() => {
 			const newSocket = io('http://localhost:3000');
       setSocket(newSocket)
-
+      
 			newSocket.on('onlineUsers', (count) => {	
 				setOnlineUsers(count);
 			});
       
+      if(performance.navigation.type === 1) {
+        setPageReload(true)
+        setTimeout(() => {
+          setPageReload(false)
+        }, 3000)
+      }
+
+      newSocket.on('user-disconnect', (name) => {
+        setConnectedUsers(connectedUsers.filter(user => user !== name))
+      })
+
       newSocket.emit('user-connected', "joined the chat", nickname, `${new Date().getHours()}:${new Date().getMinutes()}`, true)
-      
+
 			return () => {
         newSocket.disconnect();
     	};
 
 		}, []);
   
-
-    
-
     useEffect(() => {
       if (!socket) return;
 
@@ -121,6 +129,14 @@ export default function Connected() {
       }
     }, [socket])
 
+    const handleDialogOpen = (name) => {
+      setName(name);
+      setOpen(true);
+    } // end of handleDialogOpen
+
+    const handleDialogClose = () => {
+      setOpen(false);
+    } // end of handleDialogClose
 
     const handleClick = () => {
       if(inputRef.current.value === '') return;
@@ -158,8 +174,9 @@ export default function Connected() {
         {/* {isDataLoaded &&  */}
         <div className={`min-h-screen w-[100%] bg-[#edf0f8]`}>
 					<Image src={logo} alt='Any chat application logo' className={`pt-10 mx-10 clear-right`} />
-					<p className='-mt-10 mx-10 text-2xl float-right'> Online: {onlineUsers} </p>
+					<p className='-mt-10 mx-10 text-2xl float-right'> Online: {connectedUsers.length} </p>
 
+          <div className='flex'>
           <div ref={heightRef} className={`h-[${height}vh] w-[70%] bg-white m-auto rounded-xl`}>
 
           <Dialog fullWidth={true} open={open} onClose={handleDialogClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
@@ -186,29 +203,6 @@ export default function Connected() {
                   </React.Fragment>
                 )
               })}
-
-            {/*}
-            <label className='text-center text-2xl mt-5 hover:cursor-pointer'> Room: 
-              <input ref={roomRef} onChange={(e) => e.target.value} type='text' maxLength={1000} className={`self-center ${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg mx-2 pl-4 w-[68%] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} placeholder={`Send a message to ${name}`}/>
-              <button onClick={handleSpecificMessage} className='m-auto text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-36 h-12 rounded-lg bg-[#434CE6]'> Send </button>
-            </label>
-
-            <label className='text-center text-2xl mt-5 hover:cursor-pointer'> Message: 
-              <input ref={sendRef} onChange={(e) => e.target.value} type='text' maxLength={1000} className={`self-center ${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg mx-2 pl-4 w-[68%] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} placeholder={`Type the message`}/>
-            </label>
-            */}
-              {/*{userConnected && 
-                <p className='mt-5 m-auto py-2'> <span className={`${font.poppinsRegular} font-extrabold text-[#737070]`}> {nickname} </span> <span className={`${font.poppinsMedium} text-[#a2a2a2]`}> joined the chat </span> </p>
-              }
-               {userDisconnected && 
-              {
-                userDisconnectedNames.map((userDisconnectedName, index) => {
-                  return (
-                    <p key={index} className='m-auto py-2'> <span className={`${font.poppinsRegular} font-extrabold text-[#737070]`}> {userDisconnectedName} </span> <span className={`${font.poppinsMedium} text-[#a2a2a2]`}> left the chat </span> </p>
-                  );
-                })
-              }
-              */}
             </div>
 
             {/* { showEmojis && */}
@@ -231,6 +225,22 @@ export default function Connected() {
               <button onClick={handleClick}> <Image src={sendMessage} alt='Send message icon' className='self-center bg-[#9bb0bb] w-8 h-8 p-1 rounded-full hover:cursor-pointer hover:bg-[#5b6063] hover:transition-all hover:duration-500' /> </button>
             </div>
             
+          </div>
+
+          <div className='h-[100vh] w-96 bg-white mr-10 flex flex-col items-center mb-10'> 
+            {connectedUsers.map((user, index) => {
+              return (
+                <div key={index} className='flex gap-2 mt-5 border-2 border-solid border-[#d9d9d9] p-3 w-[90%]'>
+                  <div className={`text-4xl size-12 bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`} onClick={() => handleDialogOpen(user)}> {user.charAt(0)} </div>
+                  <div className='flex flex-col gap-1'> 
+                    <p className={`${font.poppinsMedium}`}> {user} </p>
+                    <p className={`${font.poppinsRegular}`}> Online </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
           </div>
 
           
