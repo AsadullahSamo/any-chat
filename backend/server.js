@@ -88,12 +88,10 @@ io.on("connection", socket => {
         
         const userLeft = connectedUsers.get(socket.id);
         socket.emit("user-disconnect", connectedUsers.get(userLeft));
-
-        
     }) // end of socket.on disconnect
 
     
-    socket.on("send-message-to-user", async (message, sender, time, receiver, senderId) => {
+    socket.on("send-message-to-user", async (message, sender, time, receiver) => {
         const userObj = {
             name: sender,
             time: time,
@@ -103,17 +101,32 @@ io.on("connection", socket => {
             receiver: receiver
         }   
         createUser(userObj)
-        let userId = await User.findOne({name: receiver}, {socketId: 1, _id: 0})        
-        console.log(userId)
-        socket.to(userId.socketId).emit("receive-message-by-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`, false);
+        let receiverId = await User.findOne({name: receiver}, {socketId: 1, _id: 0})     
+        let senderId = await User.findOne({name: sender}, {socketId: 1, _id: 0})   
+        console.log(`Message to ${receiver} with socket id ${receiverId.socketId} from ${sender} with socket id ${senderId.socketId}`)
+        socket.to(receiverId.socketId).to(senderId.socketId).emit("receive-message-by-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`, false);
     })   
     
 })
 
+
+
+
+// API routes
+app.get("/users/all", async (req, res) => {
+    try {
+        const users = await User.find({receiver: "all"});
+        res.json(users);
+    } catch (err) {
+        console.error("Error fetching users:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 app.get("/users/:name", async (req, res) => {
     const name = req.params.name;
     try {
-        const users = await User.find( {$or: [{receiver: "all"}, {receiver: name}] });
+        const users = await User.find({receiver: name});
         res.json(users);
     } catch (err) {
         console.error("Error fetching users:", err);

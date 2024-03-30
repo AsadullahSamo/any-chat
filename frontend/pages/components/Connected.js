@@ -43,11 +43,11 @@ export default function Connected() {
     let [socket, setSocket] = useState(null);
     let [pageReload, setPageReload] = useState(false)
 
-    useEffect(() => {
-      fetch(`http://localhost:8000/users/${nickname}`)
-      .then(res => res.json())
-      .then(data => setData(data))
-    }, [data])
+    // useEffect(() => {
+    //   fetch(`http://localhost:8000/users/${nickname}`)
+    //   .then(res => res.json())
+    //   .then(data => setData(data))
+    // }, [data])
 
     useEffect(() => {
       fetch(`http://localhost:8000/users`)
@@ -145,7 +145,7 @@ export default function Connected() {
     const handleSpecificMessage = () => {
       // alert("I will be executed")
       if(messageRef.current.value === '') return;
-      socket.emit('send-message-to-user', messageRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, name, socket.id)
+      socket.emit('send-message-to-user', messageRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, name)
       // setSendClicked(prevClicked => prevClicked + 1);
       // console.log(socket.id)
     } // end of handleSpecificMessage
@@ -162,6 +162,18 @@ export default function Connected() {
 
     const selectEmoji = (emoji) => {
       inputRef.current.value += emoji;
+    }
+
+    const showAllMessages = () => {
+      fetch(`http://localhost:8000/users/all`)
+      .then(res => res.json())
+      .then(data => setData(data))
+    }
+
+    const showMyMessages = () => {
+      fetch(`http://localhost:8000/users/${nickname}`)
+      .then(res => res.json())
+      .then(data => setData(data))
     }
 
     return (
@@ -182,7 +194,18 @@ export default function Connected() {
             <button onClick={handleSpecificMessage} className='m-auto text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-36 h-12 rounded-lg bg-[#434CE6]'> Send </button>
             </DialogActions>
           </Dialog>
-            
+
+
+
+          <ul class="mb-10 flex flex-wrap justify-center text-md font-bold text-center text-gray-500 dark:text-gray-400">
+              <li class="me-2">
+                  <a onClick={showMyMessages} href="#" class="inline-block px-4 py-3 text-white bg-blue-600 rounded-lg active" aria-current="page"> View my messages </a>
+              </li>
+              <li class="me-2">
+                  <a onClick={showAllMessages} href="#"  class="inline-block px-4 py-3 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white"> View all messages </a>
+              </li>
+          </ul>
+
             <div className='flex flex-col mb-10 gap-10'>
               {data.map((user, index) => {
                 return (
