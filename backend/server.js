@@ -104,7 +104,7 @@ io.on("connection", socket => {
         let receiverId = await User.findOne({name: receiver}, {socketId: 1, _id: 0})     
         let senderId = await User.findOne({name: sender}, {socketId: 1, _id: 0})   
         console.log(`Message to ${receiver} with socket id ${receiverId.socketId} from ${sender} with socket id ${senderId.socketId}`)
-        socket.to(receiverId.socketId).to(senderId.socketId).emit("receive-message-by-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`, false);
+        socket.to(receiverId.socketId.toString()).to(senderId.socketId.toString()).emit("send-message-to-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`, false);
     })   
     
 })

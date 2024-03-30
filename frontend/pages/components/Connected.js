@@ -60,7 +60,7 @@ export default function Connected() {
       const query = router.asPath.split('=')[1];
       setNickname(query);
       console.log(nickname)
-    }, [router.asPath]);
+    }, [router.query.query]);
         
 
     useEffect(() => {
@@ -107,22 +107,15 @@ export default function Connected() {
         setData([...data, {name: nickname, message: message, time: time, joined: joined}]);
       });
 
+      socket.on('send-message-to-user', (message, nickname, time, joined) => {
+        console.log('I am here with the message')
+        setData([...data, {name: nickname, message: message, time: time, joined: joined}]);
+      });
+
       return () => {
           socket.off('receive-message', handleReceivedMessage);
       };
     }, [socket, data]);
-
-    useEffect(() => {
-      if (!socket) return;
-
-      socket.on('receive-message-by-user', (message, sender, time, joined) => {
-        console.log(message, sender)
-      })
-
-      return () => {
-        socket.off('receive-message-by-user');
-      }
-    }, [socket])
 
     const handleDialogOpen = (name) => {
       setName(name);
@@ -146,8 +139,7 @@ export default function Connected() {
       // alert("I will be executed")
       if(messageRef.current.value === '') return;
       socket.emit('send-message-to-user', messageRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, name)
-      // setSendClicked(prevClicked => prevClicked + 1);
-      // console.log(socket.id)
+      setData([...data, {name: nickname, message: messageRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
     } // end of handleSpecificMessage
       
     const handleKeyDown = (e) => {
@@ -198,11 +190,13 @@ export default function Connected() {
 
 
           <ul class="mb-10 flex flex-wrap justify-center text-md font-bold text-center text-gray-500 dark:text-gray-400">
-              <li class="me-2">
-                  <a onClick={showMyMessages} href="#" class="inline-block px-4 py-3 text-white bg-blue-600 rounded-lg active" aria-current="page"> View my messages </a>
+              <li class="inline-block px-4 py-3 text-white bg-blue-600 rounded-lg active hover:cursor-pointer me-2" onClick={showMyMessages}>
+                  View my messages
+                  {/* <a onClick={showMyMessages} href="#" class="" aria-current="page"> View my messages </a> */}
               </li>
-              <li class="me-2">
-                  <a onClick={showAllMessages} href="#"  class="inline-block px-4 py-3 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white"> View all messages </a>
+              <li class="hover:cursor-pointer me-2 inline-block px-4 py-3 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white" onClick={showAllMessages}>
+                  View all messages
+                  {/* <a onClick={showAllMessages} href="#"  class="inline-block px-4 py-3 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white"> View all messages </a> */}
               </li>
           </ul>
 
