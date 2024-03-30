@@ -1,5 +1,5 @@
 const dotenv = require("dotenv")
-dotenv.config({ path: "../db/config.env" });
+dotenv.config({ path: "./config.env" });
 const express = require("express");
 const cors = require("cors");
 const User = require("./Models/userModel");
@@ -49,18 +49,18 @@ io.on("connection", socket => {
 
     socket.on('user-connected', async (message, nickname, time, joined) => {
         // storeUserName(socket.id, name);
-        const user = await User.find({name: nickname, isJoined: true})
-        
+        const user = await User.find({name: nickname})
+        console.log(`User is ${nickname}`)
         let userObj;
-        if (user.length === 0 && nickname !== null && nickname !== "" && nickname !== undefined) {        
+        if (user.length === 0) {        
             userObj = {
                 socketId: socket.id,
                 name: nickname,
-                message: message,
-                time: time,
-                joined: joined,
-                isJoined: true,
-                receiver: "all"
+                // message: message,
+                // time: time,
+                // joined: joined,
+                // isJoined: true,
+                // receiver: "all"
             }        
             createUser(userObj)
             // socket.broadcast.emit("user-connected", userObj);
@@ -89,21 +89,7 @@ io.on("connection", socket => {
         const userLeft = connectedUsers.get(socket.id);
         socket.emit("user-disconnect", connectedUsers.get(userLeft));
 
-        await User.updateMany({name: userLeft}, {$set: {isJoined: false}})
-        try {
-            if (userLeft) {
-                const userObj = {
-                    name: userLeft,
-                    time: new Date().toLocaleTimeString(),
-                    message: "left the chat",
-                    joined: true,
-                    receiver: "all"
-                };
-                createUser(userObj);
-            }
-        } catch (error) {
-            console.error("Error handling user disconnection:", error);
-        }  
+        
     }) // end of socket.on disconnect
 
     
@@ -137,7 +123,7 @@ app.get("/users/:name", async (req, res) => {
 
 app.get("/users", async (req, res) => {
     try {
-        let users = await User.distinct("name", {isJoined: true});
+        let users = await User.distinct("name");
         res.json(users);
     } catch (err) {
         console.error("Error fetching users:", err);

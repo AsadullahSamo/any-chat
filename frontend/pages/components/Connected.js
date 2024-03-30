@@ -56,8 +56,11 @@ export default function Connected() {
     }, [connectedUsers])
 
     useEffect(() => {
-      setNickname(router.query.query);
-    }, [router.query.query]);
+      console.log(router.asPath)
+      const query = router.asPath.split('=')[1];
+      setNickname(query);
+      console.log(nickname)
+    }, [router.asPath]);
         
 
     useEffect(() => {
@@ -65,14 +68,6 @@ export default function Connected() {
       .then(res => res.json())
       .then(data => setEmojis(data))
     }, []);    
-
-    useEffect(() => {
-      window.addEventListener('beforeunload', (e) => {
-        e.preventDefault();
-        socket.emit('user-disconnected', pageReload)
-      })
-    }, [])
-
 
 		useEffect(() => {
 			const newSocket = io('http://localhost:3000');
@@ -93,7 +88,7 @@ export default function Connected() {
         setConnectedUsers(connectedUsers.filter(user => user !== name))
       })
 
-      newSocket.emit('user-connected', "joined the chat", nickname, `${new Date().getHours()}:${new Date().getMinutes()}`, true)
+      newSocket.emit('user-connected', "joined the chat", router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, true)
 
 			return () => {
         newSocket.disconnect();
@@ -141,7 +136,7 @@ export default function Connected() {
     const handleClick = () => {
       if(inputRef.current.value === '') return;
 
-      socket.emit('send-message', inputRef.current.value, nickname, `${new Date().getHours()}:${new Date().getMinutes()}`);
+      socket.emit('send-message', inputRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`);
       setHeight(heightRef.current.clientHeight + 10);
       setData([...data, {name: nickname, message: inputRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
       inputRef.current.value = '';
@@ -150,7 +145,7 @@ export default function Connected() {
     const handleSpecificMessage = () => {
       // alert("I will be executed")
       if(messageRef.current.value === '') return;
-      socket.emit('send-message-to-user', messageRef.current.value, nickname, `${new Date().getHours()}:${new Date().getMinutes()}`, name, socket.id)
+      socket.emit('send-message-to-user', messageRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, name, socket.id)
       // setSendClicked(prevClicked => prevClicked + 1);
       // console.log(socket.id)
     } // end of handleSpecificMessage
@@ -192,13 +187,11 @@ export default function Connected() {
               {data.map((user, index) => {
                 return (
                   <React.Fragment key={index}>  
-                    {user && !user.joined ? (
+                    {user && !user.joined && (
                      <>
-                      <p className={`px-2 w-[30%] text-center ${font.poppinsMedium} text-[#737070] ${user.joined ? 'bg-white mx-auto' : 'bg-[#D6DCE3] mx-10'}  mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
-                      <p className={`${font.poppinsMedium} text-[#737070] -mt-12 mx-10 py-2 hover:cursor-pointer hover:text-red-500`} onClick={() => handleDialogOpen(user.name)}> {user.name}, <span className='text-[#a2a2a2]'> {user.time} </span> </p>
+                      <p className={`px-2 w-[30%] text-center ${font.poppinsMedium} text-[#737070] ${user.name === nickname ? 'bg-[#434CE6] self-end text-white mr-10' : 'bg-[#D6DCE3] mx-10'}  mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
+                      <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2 hover:cursor-pointer hover:text-red-500`} onClick={() => handleDialogOpen(user.name)}> {user.name}, <span className='text-[#a2a2a2]'> {user.time} </span> </p>
                      </>
-                    ) : user && (
-                      <p className='mt-1 m-auto py-2'> <span className={`${font.poppinsRegular} font-extrabold text-[#737070]`}> {user.name} </span> <span className={`${font.poppinsMedium} text-[#a2a2a2]`}> {user.message} </span> </p>
                     )}
                   </React.Fragment>
                 )
