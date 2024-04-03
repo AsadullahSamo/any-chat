@@ -35,7 +35,7 @@ const createUser = async (userObj) => {
 // Socket connections and management
 const io = require("socket.io")(3000, {
     cors: { 
-        origin: "http://localhost:3001",
+        origin: "http://localhost:8080",
         methods: ["GET", "POST"]
     }
 });
@@ -100,11 +100,21 @@ io.on("connection", socket => {
             specific: true,
             receiver: receiver
         }   
+        const senderObj = {
+            name: sender,
+            time: time,
+            message: message,
+            joined: false,
+            receiver: sender,
+            to: receiver
+        }
         createUser(userObj)
+        createUser(senderObj)
         let receiverId = await User.findOne({name: receiver}, {socketId: 1, _id: 0})     
-        let senderId = await User.findOne({name: sender}, {socketId: 1, _id: 0})   
-        console.log(`Message to ${receiver} with socket id ${receiverId.socketId} from ${sender} with socket id ${senderId.socketId}`)
-        socket.to(receiverId.socketId.toString()).to(senderId.socketId.toString()).emit("send-message-to-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`, false);
+        let senderId = await User.findOne({name: sender}, {socketId: 1, _id: 0})
+        console.log(`Sender id is ${senderId.socketId}`)
+        console.log(`Receiver id is ${receiverId.socketId}`)
+        socket.to(receiverId.socketId).emit("send-message-to-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`, false);        
     })   
     
 })
@@ -126,7 +136,7 @@ app.get("/users/all", async (req, res) => {
 app.get("/users/:name", async (req, res) => {
     const name = req.params.name;
     try {
-        const users = await User.find({receiver: name});
+        const users = await User.find( {$or: [{receiver: name}, {$and: [{receiver: name}, {to: name}]}]} );
         res.json(users);
     } catch (err) {
         console.error("Error fetching users:", err);

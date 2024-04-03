@@ -15,39 +15,27 @@ import DialogContent from '@mui/material/DialogContent';
 
 export default function Connected() {
 
-    const [open, setOpen] = useState(false);
-    const [name, setName] = useState('');
-    const [message, setMessage] = useState(''); // ['message']
     const router = useRouter();
 
     const heightRef = useRef(null);
     const inputRef = useRef(null);
     const messageRef = useRef(null);
-    const roomRef = useRef(null);
-    const sendRef = useRef(null);
-
+    
     const [emojis, setEmojis] = useState([]);
-    // const [randomColor, setRandomColor] = useState('bg-gray-500');
+    
+    const [myMessages, setMyMessages] = useState([{name: '', message: '', time: '', joined: false}]);
+    const [allMessages, setAllMessages] = useState([{name: '', message: '', time: '', joined: false}]);
+    const [open, setOpen] = useState(false);
+    const [name, setName] = useState('');
+    const [active, setActive] = useState("allMessages");
     const [connectedUsers, setConnectedUsers] = useState([])
-    const [nickname, setNickname] = useState(router.query.query); // ['nickname']
-    const [id, setId] = useState('');
-    const [checkId, setCheckId] = useState('');
-		const [onlineUsers, setOnlineUsers] = useState(0);
-    const [userConnected, setUserConnected] = useState(false);
-    const [userDisconnected, setUserDisconnected] = useState(false);
-    const [userDisconnectedNames, setUserDisconnectedNames] = useState([]);
+    const [nickname, setNickname] = useState(router.asPath.split('=')[1]); // ['nickname']
     const [height, setHeight] = useState(0);
     const [showEmojis, setShowEmojis] = useState(false);
     const [data, setData] = useState([{name: '', message: '', time: '', joined: false}]);
-    // let [sendClicked, setSendClicked] = useState(0);
+    
     let [socket, setSocket] = useState(null);
-    let [pageReload, setPageReload] = useState(false)
 
-    // useEffect(() => {
-    //   fetch(`http://localhost:8000/users/${nickname}`)
-    //   .then(res => res.json())
-    //   .then(data => setData(data))
-    // }, [data])
 
     useEffect(() => {
       fetch(`http://localhost:8000/users`)
@@ -59,7 +47,6 @@ export default function Connected() {
       console.log(router.asPath)
       const query = router.asPath.split('=')[1];
       setNickname(query);
-      console.log(nickname)
     }, [router.query.query]);
         
 
@@ -69,6 +56,22 @@ export default function Connected() {
       .then(data => setEmojis(data))
     }, []);    
 
+    useEffect(() => {
+      fetch(`http://localhost:8000/users/all`)
+      .then(res => res.json())
+      .then(data => setData(data))
+    }, [])
+
+    useEffect(() => {
+      fetch(`http://localhost:8000/users/${nickname}`)
+      .then(res => res.json())
+      .then(data => {
+        setMyMessages(data)
+        console.log(data)
+      })
+    }, [])
+
+
 		useEffect(() => {
 			const newSocket = io('http://localhost:3000');
       setSocket(newSocket)
@@ -76,13 +79,6 @@ export default function Connected() {
 			newSocket.on('onlineUsers', (count) => {	
 				setOnlineUsers(count);
 			});
-      
-      if(performance.navigation.type === 1) {
-        setPageReload(true)
-        setTimeout(() => {
-          setPageReload(false)
-        }, 3000)
-      }
 
       newSocket.on('user-disconnect', (name) => {
         setConnectedUsers(connectedUsers.filter(user => user !== name))
@@ -100,22 +96,39 @@ export default function Connected() {
       if (!socket) return;
 
       const handleReceivedMessage = (message, nickname, time) => {
-        setData([...data, {name: nickname, message: message, time: time}]);
+        console.log(message, nickname, time)
+        setData([...allMessages, {name: nickname, message: message, time: time, joined: false}]);
       };
 
       socket.on('receive-message', (message, nickname, time, joined) => {
         setData([...data, {name: nickname, message: message, time: time, joined: joined}]);
-      });
-
-      socket.on('send-message-to-user', (message, nickname, time, joined) => {
-        console.log('I am here with the message')
-        setData([...data, {name: nickname, message: message, time: time, joined: joined}]);
+        console.log(message, nickname, time, joined)
+        // setAllMessages(prevMessages => [...prevMessages, {name: nickname, message: inputRef.current.value, time: time, joined: joined}])
       });
 
       return () => {
           socket.off('receive-message', handleReceivedMessage);
       };
     }, [socket, data]);
+
+    useEffect(() => {
+      if (!socket) return;
+
+      const handleReceivedMessage = (message, nickname, time, joined) => {
+        console.log(message, nickname, time)
+        setMyMessages([...myMessages, {name: nickname, message: message, time: time, joined: joined}]);
+      };
+
+      socket.on('send-message-to-user', (message, nickname, time, joined) => {
+        setMyMessages([...myMessages, {name: nickname, message: message, time: time, joined: joined}]);
+        console.log(message, nickname, time, joined)
+        // setAllMessages(prevMessages => [...prevMessages, {name: nickname, message: inputRef.current.value, time: time, joined: joined}])
+      });
+
+      return () => {
+          socket.off('send-message-to-user', handleReceivedMessage);
+      };
+    }, [socket, myMessages]);
 
     const handleDialogOpen = (name) => {
       setName(name);
@@ -129,9 +142,10 @@ export default function Connected() {
     const handleClick = () => {
       if(inputRef.current.value === '') return;
 
-      socket.emit('send-message', inputRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`);
+      socket.emit('send-message', inputRef.current.value, nickname, `${new Date().getHours()}:${new Date().getMinutes()}`);
       setHeight(heightRef.current.clientHeight + 10);
       setData([...data, {name: nickname, message: inputRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
+      // setAllMessages(prevMessages => [...prevMessages, {name: nickname, message: inputRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
       inputRef.current.value = '';
     }; // end of handleClick
 
@@ -139,7 +153,9 @@ export default function Connected() {
       // alert("I will be executed")
       if(messageRef.current.value === '') return;
       socket.emit('send-message-to-user', messageRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, name)
-      setData([...data, {name: nickname, message: messageRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
+      // setData([...data, {name: nickname, message: messageRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
+      setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: messageRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
+      setOpen(false);
     } // end of handleSpecificMessage
       
     const handleKeyDown = (e) => {
@@ -157,16 +173,19 @@ export default function Connected() {
     }
 
     const showAllMessages = () => {
-      fetch(`http://localhost:8000/users/all`)
-      .then(res => res.json())
-      .then(data => setData(data))
+      // fetch(`http://localhost:8000/users/all`)
+      // .then(res => res.json())
+      // .then(data => setData(data))
+
+      setActive("allMessages")
     }
 
     const showMyMessages = () => {
-      fetch(`http://localhost:8000/users/${nickname}`)
-      .then(res => res.json())
-      .then(data => setData(data))
-    }
+      // fetch(`http://localhost:8000/users/${nickname}`)
+      // .then(res => res.json())
+      // .then(data => setData(data))
+      setActive("myMessages")
+    } 
 
     return (
       <>
@@ -189,38 +208,50 @@ export default function Connected() {
 
 
 
-          <ul class="mb-10 flex flex-wrap justify-center text-md font-bold text-center text-gray-500 dark:text-gray-400">
-              <li class="inline-block px-4 py-3 text-white bg-blue-600 rounded-lg active hover:cursor-pointer me-2" onClick={showMyMessages}>
+          <ul className="mb-10 flex flex-wrap justify-center text-md font-bold text-center text-white bg-[#343A40]">
+              <li className={`inline-block px-4 py-3 ${active === "myMessages" ? `bg-blue-600` : ""} hover:bg-gray-500 text-white rounded-lg  hover:cursor-pointer me-2`} onClick={showMyMessages}>
                   View my messages
-                  {/* <a onClick={showMyMessages} href="#" class="" aria-current="page"> View my messages </a> */}
               </li>
-              <li class="hover:cursor-pointer me-2 inline-block px-4 py-3 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white" onClick={showAllMessages}>
+              <li className={`inline-block px-4 py-3 ${active === "allMessages" ? `bg-blue-600` : ""} hover:bg-gray-500 text-white rounded-lg  hover:cursor-pointer me-2`} onClick={showAllMessages}>
                   View all messages
-                  {/* <a onClick={showAllMessages} href="#"  class="inline-block px-4 py-3 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white"> View all messages </a> */}
               </li>
           </ul>
 
             <div className='flex flex-col mb-10 gap-10'>
-              {data.map((user, index) => {
+              { active === "allMessages" ? 
+              data.map((user, index) => {
                 return (
                   <React.Fragment key={index}>  
-                    {user && !user.joined && (
+                    {user && (
                      <>
-                      <p className={`px-2 w-[30%] text-center ${font.poppinsMedium} text-[#737070] ${user.name === nickname ? 'bg-[#434CE6] self-end text-white mr-10' : 'bg-[#D6DCE3] mx-10'}  mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
-                      <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2 hover:cursor-pointer hover:text-red-500`} onClick={() => handleDialogOpen(user.name)}> {user.name}, <span className='text-[#a2a2a2]'> {user.time} </span> </p>
+                      <p className={`px-2 w-[30%] text-center ${font.poppinsMedium} ${user.name === nickname ? 'text-white bg-blue-500 self-end mr-10' : 'text-[#737070] bg-[#D6DCE3] mx-10'} mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
+                      <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name}, <span className='text-[#a2a2a2]'> {user.time} </span> </p>
                      </>
                     )}
                   </React.Fragment>
                 )
-              })}
+              }) :
+              myMessages.map((user, index) => {
+                return (
+                  <React.Fragment key={index}>  
+                    {user && (
+                     <>
+                      <p className={`px-2 w-[30%] text-center ${font.poppinsMedium} text-[#737070] ${user.name === nickname ? 'bg-[#434CE6] self-end text-white mr-10' : 'bg-[#D6DCE3] mx-10'}  mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
+                      <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name}, <span className='text-[#a2a2a2]'> {user.time} </span> </p>
+                     </>
+                    )}
+                  </React.Fragment>
+                )
+              })
+            }
             </div>
 
             {/* { showEmojis && */}
-              <div className={`${showEmojis ? `${style.fadeIn}` : `${style.fadeOut}`} mb-4 -ml-[14%] w-[20rem] h-[20rem] border-4 border-solid border-white flex flex-wrap mt-[4rem] overflow-y-auto bg-white rounded-xl`}>
+              <div className={`${showEmojis ? `${style.fadeIn}` : `${style.fadeOut}`} mb-4 w-[20rem] h-[20rem] border-4 border-solid border-white flex flex-wrap mt-[4rem] overflow-y-auto bg-white rounded-xl`}>
                 { 
                   emojis.map((emoji, index) => {
                     return (
-                      <div key={index} className=' flex gap-5'>
+                      <div key={index} className='flex gap-5'>
                         <p onClick={() => selectEmoji(emoji.character)} className='text-center text-2xl mt-5 hover:cursor-pointer'> {emoji.character} </p>
                       </div>
                     );
@@ -240,8 +271,8 @@ export default function Connected() {
           <div className='h-[100vh] w-96 bg-white mr-10 flex flex-col items-center mb-10'> 
             {connectedUsers.map((user, index) => {
               return (
-                <div key={index} className='flex gap-2 mt-5 border-2 border-solid border-[#d9d9d9] p-3 w-[90%]'>
-                  <div className={`text-4xl size-12 bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`} onClick={() => handleDialogOpen(user)}> {user.charAt(0)} </div>
+                <div key={index} className='flex gap-2 mt-5 border-2 border-solid hover:bg-gray-200 border-[#d9d9d9] p-3 w-[90%] hover:cursor-pointer' onClick={() => handleDialogOpen(user)}>
+                  <div className={`text-4xl size-12 bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`}> {user.charAt(0)} </div>
                   <div className='flex flex-col gap-1'> 
                     <p className={`${font.poppinsMedium}`}> {user} </p>
                     <p className={`${font.poppinsRegular}`}> Online </p>
