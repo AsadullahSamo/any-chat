@@ -26,7 +26,6 @@ mongoose.connect(`${process.env.CON_STR}`, {
 const createUser = async (userObj) => {
     try {
         const user = await User.create(userObj);
-        console.log(user);
     } catch (err) {
         console.log(err.message);
     }
@@ -42,31 +41,19 @@ const io = require("socket.io")(3000, {
 
 const connectedUsers = new Map()
 
-io.on("connection", socket => {
-    
-    console.log(`A user with socket id ${socket.id} is connected`);
-    
+io.on("connection", socket => {    
 
-    socket.on('user-connected', async (message, nickname, time, joined) => {
-        // storeUserName(socket.id, name);
+    socket.on('user-connected', async (nickname) => {
         const user = await User.find({name: nickname})
-        console.log(`User is ${nickname}`)
         let userObj;
         if (user.length === 0) {        
             userObj = {
                 socketId: socket.id,
                 name: nickname,
-                // message: message,
-                // time: time,
-                // joined: joined,
-                // isJoined: true,
-                // receiver: "all"
             }        
             createUser(userObj)
-            // socket.broadcast.emit("user-connected", userObj);
         } else {
             const updateUserId = await User.updateMany({name: nickname}, {$set: {socketId: socket.id}})
-            console.log(`User with name ${nickname} already exists.`);
         }
         connectedUsers.set(socket.id, nickname);
     });
@@ -76,16 +63,13 @@ io.on("connection", socket => {
             name: nickname,
             time: time,
             message: message,
-            joined: false,
             receiver: "all"
         }        
         createUser(userObj)
-        socket.broadcast.emit("receive-message", message, nickname, time, false);
+        socket.broadcast.emit("receive-message", message, nickname, time);
     });  // end of socket.on send-message
 
-    socket.on("disconnect", async () => {
-        console.log(`User with socket id ${socket.id} disconnected`);
-        
+    socket.on("disconnect", async () => {        
         const userLeft = connectedUsers.get(socket.id);
         socket.emit("user-disconnect", connectedUsers.get(userLeft));
     }) // end of socket.on disconnect
@@ -96,31 +80,21 @@ io.on("connection", socket => {
             name: sender,
             time: time,
             message: message,
-            joined: false, 
-            specific: true,
             receiver: receiver
         }   
         const senderObj = {
             name: sender,
             time: time,
             message: message,
-            joined: false,
             receiver: sender,
             to: receiver
         }
         createUser(userObj)
         createUser(senderObj)
         let receiverId = await User.findOne({name: receiver}, {socketId: 1, _id: 0})     
-        let senderId = await User.findOne({name: sender}, {socketId: 1, _id: 0})
-        console.log(`Sender id is ${senderId.socketId}`)
-        console.log(`Receiver id is ${receiverId.socketId}`)
-        socket.to(receiverId.socketId).emit("send-message-to-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`, false);        
+        socket.to(receiverId.socketId).emit("send-message-to-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`);        
     })   
-    
 })
-
-
-
 
 // API routes
 app.get("/users/all", async (req, res) => {

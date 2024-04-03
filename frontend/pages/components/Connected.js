@@ -12,7 +12,6 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 
 
-
 export default function Connected() {
 
     const router = useRouter();
@@ -22,9 +21,8 @@ export default function Connected() {
     const messageRef = useRef(null);
     
     const [emojis, setEmojis] = useState([]);
-    
-    const [myMessages, setMyMessages] = useState([{name: '', message: '', time: '', joined: false}]);
-    const [allMessages, setAllMessages] = useState([{name: '', message: '', time: '', joined: false}]);
+    const [myMessages, setMyMessages] = useState([{name: '', message: '', time: ''}]);
+    const [allMessages, setAllMessages] = useState([{name: '', message: '', time: ''}]);
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [active, setActive] = useState("allMessages");
@@ -32,8 +30,7 @@ export default function Connected() {
     const [nickname, setNickname] = useState(router.asPath.split('=')[1]); // ['nickname']
     const [height, setHeight] = useState(0);
     const [showEmojis, setShowEmojis] = useState(false);
-    const [data, setData] = useState([{name: '', message: '', time: '', joined: false}]);
-    
+    const [data, setData] = useState([{name: '', message: '', time: ''}]);
     let [socket, setSocket] = useState(null);
 
 
@@ -44,7 +41,6 @@ export default function Connected() {
     }, [connectedUsers])
 
     useEffect(() => {
-      console.log(router.asPath)
       const query = router.asPath.split('=')[1];
       setNickname(query);
     }, [router.query.query]);
@@ -65,10 +61,7 @@ export default function Connected() {
     useEffect(() => {
       fetch(`http://localhost:8000/users/${nickname}`)
       .then(res => res.json())
-      .then(data => {
-        setMyMessages(data)
-        console.log(data)
-      })
+      .then(data => setMyMessages(data))
     }, [])
 
 
@@ -84,7 +77,7 @@ export default function Connected() {
         setConnectedUsers(connectedUsers.filter(user => user !== name))
       })
 
-      newSocket.emit('user-connected', "joined the chat", router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, true)
+      newSocket.emit('user-connected', router.asPath.split('=')[1])
 
 			return () => {
         newSocket.disconnect();
@@ -96,14 +89,11 @@ export default function Connected() {
       if (!socket) return;
 
       const handleReceivedMessage = (message, nickname, time) => {
-        console.log(message, nickname, time)
-        setData([...allMessages, {name: nickname, message: message, time: time, joined: false}]);
+        setData([...allMessages, {name: nickname, message: message, time: time}]);
       };
 
-      socket.on('receive-message', (message, nickname, time, joined) => {
-        setData([...data, {name: nickname, message: message, time: time, joined: joined}]);
-        console.log(message, nickname, time, joined)
-        // setAllMessages(prevMessages => [...prevMessages, {name: nickname, message: inputRef.current.value, time: time, joined: joined}])
+      socket.on('receive-message', (message, nickname, time) => {
+        setData([...data, {name: nickname, message: message, time: time}]);
       });
 
       return () => {
@@ -114,15 +104,12 @@ export default function Connected() {
     useEffect(() => {
       if (!socket) return;
 
-      const handleReceivedMessage = (message, nickname, time, joined) => {
-        console.log(message, nickname, time)
-        setMyMessages([...myMessages, {name: nickname, message: message, time: time, joined: joined}]);
+      const handleReceivedMessage = (message, nickname, time) => {
+        setMyMessages([...myMessages, {name: nickname, message: message, time: time}]);
       };
 
-      socket.on('send-message-to-user', (message, nickname, time, joined) => {
-        setMyMessages([...myMessages, {name: nickname, message: message, time: time, joined: joined}]);
-        console.log(message, nickname, time, joined)
-        // setAllMessages(prevMessages => [...prevMessages, {name: nickname, message: inputRef.current.value, time: time, joined: joined}])
+      socket.on('send-message-to-user', (message, nickname, time) => {
+        setMyMessages([...myMessages, {name: nickname, message: message, time: time}]);
       });
 
       return () => {
@@ -146,20 +133,16 @@ export default function Connected() {
 
     const handleClick = () => {
       if(inputRef.current.value === '') return;
-
       socket.emit('send-message', inputRef.current.value, nickname, `${new Date().getHours()}:${new Date().getMinutes()}`);
       setHeight(heightRef.current.clientHeight + 10);
-      setData([...data, {name: nickname, message: inputRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
-      // setAllMessages(prevMessages => [...prevMessages, {name: nickname, message: inputRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
+      setData([...data, {name: nickname, message: inputRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`}])
       inputRef.current.value = '';
     }; // end of handleClick
 
     const handleSpecificMessage = () => {
-      // alert("I will be executed")
       if(messageRef.current.value === '') return;
       socket.emit('send-message-to-user', messageRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, name)
-      // setData([...data, {name: nickname, message: messageRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
-      setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: messageRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`, joined: false}])
+      setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: messageRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`}])
       setOpen(false);
     } // end of handleSpecificMessage
       
@@ -187,7 +170,6 @@ export default function Connected() {
 
     return (
       <>
-        {/* {isDataLoaded &&  */}
         <div className={`min-h-screen w-[100%] bg-[#edf0f8]`}>
 					<Image src={logo} alt='Any chat application logo' className={`pt-10 mx-10 clear-right`} />
 					<p className='-mt-10 mx-10 text-2xl float-right'> Online: {connectedUsers.length} </p>
@@ -207,12 +189,8 @@ export default function Connected() {
 
 
           <ul className="mb-10 flex flex-wrap justify-center text-md font-bold text-center text-white bg-[#343A40]">
-              <li className={`inline-block px-4 py-3 ${active === "myMessages" ? `bg-blue-600` : ""} hover:bg-gray-500 text-white rounded-lg  hover:cursor-pointer me-2`} onClick={showMyMessages}>
-                  View my messages
-              </li>
-              <li className={`inline-block px-4 py-3 ${active === "allMessages" ? `bg-blue-600` : ""} hover:bg-gray-500 text-white rounded-lg  hover:cursor-pointer me-2`} onClick={showAllMessages}>
-                  View all messages
-              </li>
+            <li className={`inline-block px-4 py-3 ${active === "myMessages" ? `bg-blue-600` : ""} hover:bg-gray-500 text-white rounded-lg  hover:cursor-pointer me-2`} onClick={showMyMessages}> View my messages </li>
+            <li className={`inline-block px-4 py-3 ${active === "allMessages" ? `bg-blue-600` : ""} hover:bg-gray-500 text-white rounded-lg  hover:cursor-pointer me-2`} onClick={showAllMessages}> View all messages </li>
           </ul>
 
             <div className='flex flex-col mb-10 gap-10'>
@@ -256,7 +234,6 @@ export default function Connected() {
                   })
                 }
               </div>
-            {/* } */}
 
             <div className='-mt-4 w-[100%] h-[10vh] bg-[#ced9de] rounded-b-lg flex justify-center gap-3'>
               <Image onClick={handleShowEmojis} src={emoji} alt="Smiling Emoji icon" className={`self-center hover:cursor-pointer`} />
@@ -281,10 +258,6 @@ export default function Connected() {
           </div>
 
           </div>
-
-          
-
-
 
         </div>
         {/* } */}
