@@ -139,6 +139,11 @@ export default function Connected() {
       setOpen(false);
     } // end of handleDialogClose
 
+    const identifyLink = (message) => {
+      let linkPattern = /(https?:\/\/[^\s]+)/g;
+      return linkPattern.test(message)
+    } // end of identifyLink
+
     const handleClick = () => {
       if(inputRef.current.value === '') return;
 
@@ -173,17 +178,10 @@ export default function Connected() {
     }
 
     const showAllMessages = () => {
-      // fetch(`http://localhost:8000/users/all`)
-      // .then(res => res.json())
-      // .then(data => setData(data))
-
-      setActive("allMessages")
+       setActive("allMessages")
     }
 
     const showMyMessages = () => {
-      // fetch(`http://localhost:8000/users/${nickname}`)
-      // .then(res => res.json())
-      // .then(data => setData(data))
       setActive("myMessages")
     } 
 
@@ -224,7 +222,7 @@ export default function Connected() {
                   <React.Fragment key={index}>  
                     {user && (
                      <>
-                      <p className={`px-2 w-[30%] text-center ${font.poppinsMedium} ${user.name === nickname ? 'text-white bg-blue-500 self-end mr-10' : 'text-[#737070] bg-[#D6DCE3] mx-10'} mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
+                      <p className={`break-words px-4 w-[30%] text-center ${font.poppinsMedium} ${user.name === nickname ? 'text-white bg-blue-500 self-end mr-10' : 'text-[#737070] bg-[#D6DCE3] mx-10'} mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {identifyLink(user.message) ? <a href={`${user.message}`} target='_blank'>{user.message}</a> : user.message } </p>
                       <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name}, <span className='text-[#a2a2a2]'> {user.time} </span> </p>
                      </>
                     )}
@@ -236,7 +234,7 @@ export default function Connected() {
                   <React.Fragment key={index}>  
                     {user && (
                      <>
-                      <p className={`px-2 w-[30%] text-center ${font.poppinsMedium} text-[#737070] ${user.name === nickname ? 'bg-[#434CE6] self-end text-white mr-10' : 'bg-[#D6DCE3] mx-10'}  mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
+                      <p className={`break-words px-2 w-[30%] text-center ${font.poppinsMedium} text-[#737070] ${user.name === nickname ? 'bg-[#434CE6] self-end text-white mr-10' : 'bg-[#D6DCE3] mx-10'}  mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
                       <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name}, <span className='text-[#a2a2a2]'> {user.time} </span> </p>
                      </>
                     )}
