@@ -33,13 +33,6 @@ export default function Connected() {
     const [data, setData] = useState([{name: '', message: '', time: ''}]);
     let [socket, setSocket] = useState(null);
 
-
-    useEffect(() => {
-      fetch(`http://localhost:8000/users`)
-      .then(res => res.json())
-      .then(data => setConnectedUsers(data))
-    }, [connectedUsers])
-
     useEffect(() => {
       const query = router.asPath.split('=')[1];
       setNickname(query);
@@ -51,6 +44,12 @@ export default function Connected() {
       .then(res => res.json())
       .then(data => setEmojis(data))
     }, []);    
+
+    useEffect(() => {
+      fetch(`http://localhost:8000/users`)
+      .then(res => res.json())
+      .then(data => setConnectedUsers(data))
+    }, [])
 
     useEffect(() => {
       fetch(`http://localhost:8000/users/all`)
@@ -74,10 +73,14 @@ export default function Connected() {
 			});
 
       newSocket.on('user-disconnect', (name) => {
-        setConnectedUsers(connectedUsers.filter(user => user !== name))
+        setConnectedUsers(prevUsers => prevUsers.filter(user => user !== name))
+        console.log('User disconnected:', name);
       })
 
       newSocket.emit('user-connected', router.asPath.split('=')[1])
+      newSocket.on('user-connected', (name) => {
+        setConnectedUsers(name)
+      })
 
 			return () => {
         newSocket.disconnect();
@@ -244,7 +247,8 @@ export default function Connected() {
           </div>
 
           <div className='h-[100vh] w-96 bg-white mr-10 flex flex-col items-center mb-10'> 
-            {connectedUsers.map((user, index) => {
+            { connectedUsers.length !== 0 &&
+            connectedUsers.map((user, index) => {
               return (
                 <div key={index} className='flex gap-2 mt-5 border-2 border-solid hover:bg-gray-200 border-[#d9d9d9] p-3 w-[90%] hover:cursor-pointer' onClick={() => handleDialogOpen(user)}>
                   <div className={`text-4xl size-12 bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`}> {user.charAt(0)} </div>

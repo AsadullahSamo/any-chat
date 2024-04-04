@@ -56,6 +56,9 @@ io.on("connection", socket => {
             const updateUserId = await User.updateMany({name: nickname}, {$set: {socketId: socket.id}})
         }
         connectedUsers.set(socket.id, nickname);
+        const users = Array.from(connectedUsers.values());
+        const distinctUsers = new Set(users);
+        io.emit("user-connected", Array.from(distinctUsers))
     });
 
     socket.on("send-message", (message, nickname, time) => { // listen for message received from client with same custom event name using socket.emit
@@ -71,7 +74,9 @@ io.on("connection", socket => {
 
     socket.on("disconnect", async () => {        
         const userLeft = connectedUsers.get(socket.id);
-        socket.emit("user-disconnect", connectedUsers.get(userLeft));
+        console.log("User disconnected:", userLeft, connectedUsers);
+        socket.broadcast.emit("user-disconnect", userLeft);
+        connectedUsers.delete(socket.id);
     }) // end of socket.on disconnect
 
     
@@ -120,10 +125,12 @@ app.get("/users/:name", async (req, res) => {
 
 app.get("/users", async (req, res) => {
     try {
-        let users = await User.distinct("name");
-        res.json(users);
-    } catch (err) {
-        console.error("Error fetching users:", err);
+        const users = Array.from(connectedUsers.values());
+        const distinctUsers = new Set(users);
+        console.log("Connected users:", Array.from(distinctUsers));
+        res.json(Array.from(distinctUsers));
+    } catch(e) {
+        console.error("Error fetching online users:", err);
         res.status(500).json({ error: "Internal server error" });
     }
 })

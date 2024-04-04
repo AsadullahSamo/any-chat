@@ -15,12 +15,6 @@ const userSchema = new mongoose.Schema({        // In this schema, we can define
     time: {
         type: String,
     },
-    joined: {
-        type: Boolean,
-    },
-    isJoined: {
-        type: Boolean,
-    },
     receiver: {
         type: String,
     },
