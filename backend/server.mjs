@@ -1,11 +1,18 @@
-const dotenv = require("dotenv")
+import dotenv from "dotenv";
 dotenv.config({ path: "./config.env" });
-const express = require("express");
-const cors = require("cors");
-const User = require("./Models/userModel");
+import express from "express";
+import cors from "cors";
+import User from "./Models/userModel.js";
+import fetch from 'node-fetch';
+import cheerio from 'cheerio';
+import { URL } from 'url';
+import {Server} from 'socket.io'
+
+
 
 // Database operations
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
+import mongoose from 'mongoose'
 const app = express();
 app.use(express.json());       // To parse the request body and get the request body     This line is necessary even though method definition is in another file
 app.use(cors());
@@ -32,13 +39,18 @@ const createUser = async (userObj) => {
 }
 
 // Socket connections and management
-const io = require("socket.io")(3000, {
+// const io = require("socket.io")(3000, {
+//     cors: { 
+//         origin: "http://localhost:8080",
+//         methods: ["GET", "POST"]
+//     }
+// });
+const io = new Server(3000, {
     cors: { 
         origin: "http://localhost:8080",
         methods: ["GET", "POST"]
     }
 });
-
 const connectedUsers = new Map()
 
 io.on("connection", socket => {    
@@ -74,7 +86,6 @@ io.on("connection", socket => {
 
     socket.on("disconnect", async () => {        
         const userLeft = connectedUsers.get(socket.id);
-        console.log("User disconnected:", userLeft, connectedUsers);
         socket.broadcast.emit("user-disconnect", userLeft);
         connectedUsers.delete(socket.id);
     }) // end of socket.on disconnect
@@ -127,10 +138,47 @@ app.get("/users", async (req, res) => {
     try {
         const users = Array.from(connectedUsers.values());
         const distinctUsers = new Set(users);
-        console.log("Connected users:", Array.from(distinctUsers));
         res.json(Array.from(distinctUsers));
     } catch(e) {
         console.error("Error fetching online users:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
+
+// scrape the metadata of a website
+
+app.get("/scrape", async (req, res) => {
+
+    const url = req.query.url;
+		const urlObj = new URL(url);
+    try {
+			const response = await fetch(url);
+			if (!response.ok) {
+					throw new Error('Network response was not ok');
+			}
+
+			const html = await response.text();
+      const $ = cheerio.load(html);
+
+			// Extract the metadata
+			let title = $('title').text().trim() || null;
+            title = title && title.length > 100 ? title.substring(0, 100) + '...' : title; // Limit title length
+			let description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || null;
+			let image = $('meta[property="og:image"]').attr('content') || $('img').first().attr('src') || null;
+			let favicon = `${urlObj.origin}/favicon.ico` || $('link[rel="icon"]').attr('href') || $('link[rel="shortcut icon"]').attr('href') || $('meta[property="og:image"]').attr('content') || $('img').first().attr('src')
+			const siteName = $('meta[property="og:site_name"]').attr('content') || $('meta[property="og:site"]').attr('content') || $('meta[name="application-name"]').attr('content') || `${urlObj.origin}` || null;
+
+            if (!favicon) {
+                const firstImageSrc = $('img').first().attr('src');
+                if (firstImageSrc) {
+                    favicon = firstImageSrc;
+                }
+            }
+			// Return the metadata
+			res.json({ url, title, description, image, favicon, siteName});
+
+    } catch (err) {
+        console.error('An error occurred:', err);
         res.status(500).json({ error: "Internal server error" });
     }
 })

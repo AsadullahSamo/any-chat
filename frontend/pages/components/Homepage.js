@@ -3,6 +3,8 @@ import logo from '../../public/assets/icons/logo.svg'
 import mobilePic from '../../public/assets/images/hand-holding-a-phone.png'
 import font from '../../styles/Fonts.module.css'
 import Link from 'next/link'
+import LinkPreview from './LinkPreview'
+
 export default function HomePage() {
 
   const handleKeyDown = (e) => {
@@ -14,7 +16,6 @@ export default function HomePage() {
   return (
     
     <div className='flex'>
-			
       <div className='min-h-screen w-[50%] bg-[#edf0f8]'> 
         <Image src={logo} className={`my-10 mx-10`}/>
         <h1 className={`${font.poppinsExtraBold} mt-56 mx-10 text-5xl leading-snug`}> Chat <br/> anywhere <br/> with anyone </h1>
