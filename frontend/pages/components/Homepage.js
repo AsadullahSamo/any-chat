@@ -3,7 +3,6 @@ import logo from '../../public/assets/icons/logo.svg'
 import mobilePic from '../../public/assets/images/hand-holding-a-phone.png'
 import font from '../../styles/Fonts.module.css'
 import Link from 'next/link'
-import LinkPreview from './LinkPreview'
 
 export default function HomePage() {
 

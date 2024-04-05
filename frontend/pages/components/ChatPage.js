@@ -3,7 +3,6 @@ import logo from '../../public/assets/icons/logo.svg'
 import font from '../../styles/Fonts.module.css'
 import { useRef, useState } from 'react'
 import Link from 'next/link'
-import RetainQueryLink from './RetainQueryLink'
 
 export default function ChatPage() {
 

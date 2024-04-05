@@ -10,7 +10,7 @@ import style from '../../styles/Connected.module.css';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import Card from './Card';
+import Messages from './Messages';
 
 export default function Connected() {
 
@@ -42,22 +42,16 @@ export default function Connected() {
     useEffect(() => {
       fetch('https://emoji-api.com/emojis?access_key=81b5e5f1c8f229449b4936039e5e60899f95f4c3')
       .then(res => res.json())
-      .then(data => setEmojis(data))
-    }, []);    
+      .then(data => setEmojis(data))   
 
-    useEffect(() => {
       fetch(`http://localhost:8000/users`)
       .then(res => res.json())
       .then(data => setConnectedUsers(data))
-    }, [])
 
-    useEffect(() => {
       fetch(`http://localhost:8000/users/all`)
       .then(res => res.json())
       .then(data => setData(data))
-    }, [])
 
-    useEffect(() => {
       fetch(`http://localhost:8000/users/${nickname}`)
       .then(res => res.json())
       .then(data => setMyMessages(data))
@@ -128,10 +122,7 @@ export default function Connected() {
       setOpen(false);
     } // end of handleDialogClose
 
-    const identifyLink = (message) => {
-      let linkPattern = /(https?:\/\/[^\s]+)/g;
-      return linkPattern.test(message)
-    } // end of identifyLink
+    
 
     const handleClick = () => {
       if(inputRef.current.value === '') return;
@@ -199,40 +190,9 @@ export default function Connected() {
               {/* Messages */}
               <div className='flex flex-col mb-10 gap-10'>
                 {active === "allMessages" ?
-                  data.map((user, index) => {
-                    return (
-                      <React.Fragment key={index}>
-                      {user && (
-                        <>
-                          {identifyLink(user.message) ? (
-                            <>
-                              <p className={`break-words px-4 w-[30%] text-center ${font.poppinsMedium} ${user.name === nickname ? 'text-white bg-blue-500 self-end mr-10' : 'text-[#737070] bg-[#D6DCE3] mx-10'} mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message.substring(0, user.message.indexOf("http"))} </p>
-                              <div className={`${user.name === nickname ? 'flex justify-end mr-10' : 'ml-10'}`}><Card siteUrl={user.message.substring(user.message.indexOf("http"))} /></div>                                
-                              <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
-                            </>
-                          ) : (
-                            <>
-                              <p className={`break-words px-4 w-[30%] text-center ${font.poppinsMedium} ${user.name === nickname ? 'text-white bg-blue-500 self-end mr-10' : 'text-[#737070] bg-[#D6DCE3] mx-10'} mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
-                              <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
-                            </>
-                          )}
-                        </>
-                      )}
-                    </React.Fragment>
-                    )
-                  }) :
-                  myMessages.map((user, index) => {
-                    return (
-                      <React.Fragment key={index}>
-                        {user && (
-                          <>
-                            <p className={`break-words px-2 w-[30%] text-center ${font.poppinsMedium} text-[#737070] ${user.name === nickname ? 'bg-[#434CE6] self-end text-white mr-10' : 'bg-[#D6DCE3] mx-10'}  mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}> {user.message} </p>
-                            <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name}, <span className='text-[#a2a2a2]'> {user.time} </span> </p>
-                          </>
-                        )}
-                      </React.Fragment>
-                    )
-                  })
+                  <Messages messages={data} nickname={nickname} />
+                  :
+                  <Messages messages={myMessages} nickname={nickname}/>
                 }
               </div>
 
