@@ -17,11 +17,7 @@ const app = express();
 app.use(express.json());       // To parse the request body and get the request body     This line is necessary even though method definition is in another file
 app.use(cors());
 
-mongoose.connect(`${process.env.CON_STR}`, {
-    bufferCommands: false,
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
+mongoose.connect(`${process.env.CON_STR}`)
 .then((con) => { 
     console.log("Connected to MongoDB")
     const PORT = 8000;
@@ -96,20 +92,39 @@ io.on("connection", socket => {
             name: sender,
             time: time,
             message: message,
-            receiver: receiver
+            receiver: receiver,
         }   
         const senderObj = {
             name: sender,
             time: time,
             message: message,
-            receiver: sender,
-            to: receiver
+            sender: sender,
         }
         createUser(userObj)
         createUser(senderObj)
         let receiverId = await User.findOne({name: receiver}, {socketId: 1, _id: 0})     
-        socket.to(receiverId.socketId).emit("send-message-to-user", message, sender, `${new Date().getHours()}:${new Date().getMinutes()}`);        
+        socket.to(receiverId.socketId).emit("send-message-to-user", message, sender, `${new Date().toLocaleString()}`);        
     })   
+
+    socket.on("delete-message", async (index, id, active, nickname, message, time) => {
+        if(active === "allMessages") {
+            console.log("Message to be deleted has id", id)
+            const deleteMessage = await User.deleteOne({_id: id, receiver: "all"});
+            console.log("Deleted message for all is ", deleteMessage)
+        } else {
+            const deletedMessage = await User.deleteMany({ $and: [{ message: message, time: time }, { receiver: { $ne: "all" } }]});
+            console.log("Deleted message for everyone is ", deletedMessage)
+        }
+        socket.broadcast.emit("delete-message", index)
+    })
+
+    socket.on("delete-message-for-me", async (id, active, name) => {
+        if(active === "myMessages") {
+            console.log(`I will be executed with message id: ${id}`)
+            const deleteMessage = await User.deleteOne({_id: id});
+            // console.log("Deleted message for me is ", deleteMessage)
+        }
+    })
 })
 
 // API routes
@@ -126,7 +141,7 @@ app.get("/users/all", async (req, res) => {
 app.get("/users/:name", async (req, res) => {
     const name = req.params.name;
     try {
-        const users = await User.find( {$or: [{receiver: name}, {$and: [{receiver: name}, {to: name}]}]} );
+        const users = await User.find( {$or: [{receiver: name}, {sender: name}]} );
         res.json(users);
     } catch (err) {
         console.error("Error fetching users:", err);

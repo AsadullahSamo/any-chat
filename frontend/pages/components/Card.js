@@ -23,7 +23,6 @@ export default function Card( { siteUrl } ) {
           setFavicon(data.favicon);
           setSiteName(data.siteName);
           setUrl(data.url);
-          console.log(data.image)
         })
         .catch(error => {
           console.error('An error occurred:', error);

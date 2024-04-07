@@ -19,6 +19,9 @@ const userSchema = new mongoose.Schema({        // In this schema, we can define
     receiver: {
         type: String,
     },
+    sender: {
+        type: String,
+    }
 })
 
 const Users = mongoose.model("users", userSchema); 

@@ -40,6 +40,7 @@ export default function Connected() {
         
 
     useEffect(() => {
+      const deletedMessages = JSON.parse(localStorage.getItem('deletedMessages'));
       fetch('https://emoji-api.com/emojis?access_key=81b5e5f1c8f229449b4936039e5e60899f95f4c3')
       .then(res => res.json())
       .then(data => setEmojis(data))   
@@ -50,7 +51,14 @@ export default function Connected() {
 
       fetch(`http://localhost:8000/users/all`)
       .then(res => res.json())
-      .then(data => setData(data))
+      .then(data => {
+        if(deletedMessages !== null) {
+          const filteredData = data.filter(message => !deletedMessages.includes(message._id));
+          setData(filteredData);
+        } else {
+          setData(data);
+        }
+      });
 
       fetch(`http://localhost:8000/users/${nickname}`)
       .then(res => res.json())
@@ -113,6 +121,20 @@ export default function Connected() {
       };
     }, [socket, myMessages]);
 
+    useEffect(() => {
+      if (!socket) return;
+
+        socket.on('delete-message', (index) => {
+          if(active === "allMessages") {
+            setData([...data.filter((message, i) => i !== index)]);
+          }
+          else {
+            setMyMessages([...myMessages.filter((message, i) => i !== index)]);
+          }
+        })
+
+    }, [socket]);
+
     const handleDialogOpen = (name) => {
       setName(name);
       setOpen(true);
@@ -122,20 +144,46 @@ export default function Connected() {
       setOpen(false);
     } // end of handleDialogClose
 
-    
+    const deleteMessageForMe = (index) => {
+      if(active === "allMessages") {
+        socket.emit('delete-message-for-me', data[index]._id, "allMessages", nickname);
+        setData([...data.filter((message, i) => i !== index)]);
+        const deletedMessages = JSON.parse(localStorage.getItem('deletedMessages')) || [];
+        localStorage.setItem('deletedMessages', JSON.stringify([...deletedMessages, data[index]._id]))
+      } else {
+        socket.emit('delete-message-for-me', myMessages[index]._id, "myMessages", nickname);
+        setMyMessages([...myMessages.filter((message, i) => i !== index)]);
+      }
+    } // end of deleteMessageForMe
+
+    const deleteMessageForEveryone = (index) => {
+      if(active === "allMessages") {
+        if(data[index].name !== nickname) return;
+        socket.emit('delete-message', index, data[index]._id, "allMessages", nickname, data[index].message, data[index].time);
+        setData(prevData => [...prevData.filter((message, i) => i !== index)]);
+      } else {
+        if(myMessages[index].name !== nickname) return;
+        socket.emit('delete-message', index, myMessages[index]._id, "myMessages", nickname, myMessages[index].message, myMessages[index].time);
+        // socket.on('on-delete-message-for-all', () => {
+        //   console.log("I will be executed in all components")
+        //   setMyMessages([...myMessages.filter((message, i) => i !== index)]);
+        // })
+        setMyMessages(prevData => [...prevData.filter((message, i) => i !== index)]);
+      }
+    } // end of handleDeletedMessage
 
     const handleClick = () => {
       if(inputRef.current.value === '') return;
-      socket.emit('send-message', inputRef.current.value, nickname, `${new Date().getHours()}:${new Date().getMinutes()}`);
+      socket.emit('send-message', inputRef.current.value, nickname, `${new Date().toLocaleString()}`);
       setHeight(heightRef.current.clientHeight + 10);
-      setData([...data, {name: nickname, message: inputRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`}])
+      setData([...data, {name: nickname, message: inputRef.current.value, time: `${new Date().toLocaleString()}`}])
       inputRef.current.value = '';
     }; // end of handleClick
 
     const handleSpecificMessage = () => {
       if(messageRef.current.value === '') return;
-      socket.emit('send-message-to-user', messageRef.current.value, router.asPath.split('=')[1], `${new Date().getHours()}:${new Date().getMinutes()}`, name)
-      setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: messageRef.current.value, time: `${new Date().getHours()}:${new Date().getMinutes()}`}])
+      socket.emit('send-message-to-user', messageRef.current.value, router.asPath.split('=')[1], `${new Date().toLocaleString()}`, name)
+      setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: messageRef.current.value, time: `${new Date().toLocaleString()}`}])
       setOpen(false);
     } // end of handleSpecificMessage
       
@@ -190,9 +238,9 @@ export default function Connected() {
               {/* Messages */}
               <div className='flex flex-col mb-10 gap-10'>
                 {active === "allMessages" ?
-                  <Messages messages={data} nickname={nickname} />
+                  <Messages messages={data} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe}/>
                   :
-                  <Messages messages={myMessages} nickname={nickname}/>
+                  <Messages messages={myMessages} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe}/>
                 }
               </div>
 
