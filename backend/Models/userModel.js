@@ -21,7 +21,10 @@ const userSchema = new mongoose.Schema({        // In this schema, we can define
     },
     sender: {
         type: String,
-    }
+    },
+    r: {
+        type: String,
+    },
 })
 
 const Users = mongoose.model("users", userSchema); 

@@ -88,6 +88,7 @@ io.on("connection", socket => {
 
     
     socket.on("send-message-to-user", async (message, sender, time, receiver) => {
+        let receiverId = await User.findOne({name: receiver}, {socketId: 1, _id: 0})     
         const userObj = {
             name: sender,
             time: time,
@@ -99,30 +100,37 @@ io.on("connection", socket => {
             time: time,
             message: message,
             sender: sender,
+            r: receiver
         }
         createUser(userObj)
         createUser(senderObj)
-        let receiverId = await User.findOne({name: receiver}, {socketId: 1, _id: 0})     
+        
         socket.to(receiverId.socketId).emit("send-message-to-user", message, sender, `${new Date().toLocaleString()}`);        
     })   
 
     socket.on("delete-message", async (index, id, active, nickname, message, time) => {
         if(active === "allMessages") {
             console.log("Message to be deleted has id", id)
-            const deleteMessage = await User.deleteOne({_id: id, receiver: "all"});
+            const deleteMessage = await User.deleteOne({message: message, time: time, receiver: "all"});
             console.log("Deleted message for all is ", deleteMessage)
+            socket.broadcast.emit("delete-message", index, "allMessages", message, time)
         } else {
+            const receiver = await User.find({ message: message, time: time })
+            const extractedReceiver = receiver[0].receiver || receiver[0].r || receiver[1].receiver || receiver[1].r || receiver.receiver || receiver.r
+            console.log(`Receiver is ${receiver} and extracted receiver is ${extractedReceiver}`)
+            const receiverId = await User.findOne({name: extractedReceiver}, {socketId: 1, _id: 0})
+            console.log(`Receiver id is ${receiverId.socketId}`)
+            socket.to(receiverId.socketId).emit("delete-message", index, "myMessages", message, time)
             const deletedMessage = await User.deleteMany({ $and: [{ message: message, time: time }, { receiver: { $ne: "all" } }]});
             console.log("Deleted message for everyone is ", deletedMessage)
         }
-        socket.broadcast.emit("delete-message", index)
+        // socket.broadcast.emit("delete-message", index)
     })
 
-    socket.on("delete-message-for-me", async (id, active, name) => {
+    socket.on("delete-message-for-me", async (message, time, active, name) => {
         if(active === "myMessages") {
-            console.log(`I will be executed with message id: ${id}`)
-            const deleteMessage = await User.deleteOne({_id: id});
-            // console.log("Deleted message for me is ", deleteMessage)
+            const deleteMessage = await User.deleteOne({message: message, time: time, $or: [{receiver: name}, {sender: name}]});
+            console.log("Deleted message for me is ", deleteMessage)
         }
     })
 })

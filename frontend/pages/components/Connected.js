@@ -53,7 +53,7 @@ export default function Connected() {
       .then(res => res.json())
       .then(data => {
         if(deletedMessages !== null) {
-          const filteredData = data.filter(message => !deletedMessages.includes(message._id));
+          const filteredData = data.filter(message => !deletedMessages.some(deletedMessage =>  Array.isArray(deletedMessage) && deletedMessage.length >= 2 && deletedMessage[0] === message.message && deletedMessage[1] === message.time));
           setData(filteredData);
         } else {
           setData(data);
@@ -124,12 +124,14 @@ export default function Connected() {
     useEffect(() => {
       if (!socket) return;
 
-        socket.on('delete-message', (index) => {
-          if(active === "allMessages") {
-            setData([...data.filter((message, i) => i !== index)]);
+        socket.on('delete-message', (index, activeTab, msg, t) => {
+          if(activeTab === "allMessages") {
+            setData(prevData => prevData.filter((message, i) => i !== index));
+            console.log("Index to be deleted is ", index)
           }
           else {
-            setMyMessages([...myMessages.filter((message, i) => i !== index)]);
+            setMyMessages(prevData => prevData.filter((message, i) => message.message != msg && message.time !== t));
+            console.log("Only my messages will be deleted")
           }
         })
 
@@ -146,29 +148,27 @@ export default function Connected() {
 
     const deleteMessageForMe = (index) => {
       if(active === "allMessages") {
-        socket.emit('delete-message-for-me', data[index]._id, "allMessages", nickname);
-        setData([...data.filter((message, i) => i !== index)]);
+        socket.emit('delete-message-for-me', data[index].message, data[index].time, "allMessages", nickname);
+        setData(prevData => prevData.filter((message, i) => message.message !== data[index].message && message.time !== data[index].time));
         const deletedMessages = JSON.parse(localStorage.getItem('deletedMessages')) || [];
-        localStorage.setItem('deletedMessages', JSON.stringify([...deletedMessages, data[index]._id]))
+        localStorage.setItem('deletedMessages', JSON.stringify([...deletedMessages, [data[index].message, data[index].time]]))
       } else {
-        socket.emit('delete-message-for-me', myMessages[index]._id, "myMessages", nickname);
-        setMyMessages([...myMessages.filter((message, i) => i !== index)]);
+        console.log("My messages to be deleted are ", myMessages[index].message)
+        socket.emit('delete-message-for-me', myMessages[index].message, myMessages[index].time, "myMessages", nickname);
+        setMyMessages(prevData => prevData.filter((message, i) => message.message !== myMessages[index].message && message.time !== myMessages[index].time));
       }
+      
     } // end of deleteMessageForMe
 
     const deleteMessageForEveryone = (index) => {
       if(active === "allMessages") {
         if(data[index].name !== nickname) return;
         socket.emit('delete-message', index, data[index]._id, "allMessages", nickname, data[index].message, data[index].time);
-        setData(prevData => [...prevData.filter((message, i) => i !== index)]);
+        setData(prevData => prevData.filter((message, i) => message.message !== data[index].message && message.time !== data[index].time));
       } else {
         if(myMessages[index].name !== nickname) return;
         socket.emit('delete-message', index, myMessages[index]._id, "myMessages", nickname, myMessages[index].message, myMessages[index].time);
-        // socket.on('on-delete-message-for-all', () => {
-        //   console.log("I will be executed in all components")
-        //   setMyMessages([...myMessages.filter((message, i) => i !== index)]);
-        // })
-        setMyMessages(prevData => [...prevData.filter((message, i) => i !== index)]);
+        setMyMessages(prevData => prevData.filter((message, i) => message.message !== myMessages[index].message && message.time !== myMessages[index].time));
       }
     } // end of handleDeletedMessage
 
@@ -191,23 +191,23 @@ export default function Connected() {
       if (e.key === 'Enter') {
         handleClick();
       }
-    }
+    } // end of handleKeyDown
 
     const handleShowEmojis = () => {
       setShowEmojis(prevShowEmojis => !prevShowEmojis);
-    }
+    } // end of handleShowEmojis
 
     const selectEmoji = (emoji) => {
       inputRef.current.value += emoji;
-    }
+    } // end of selectEmoji
 
     const showAllMessages = () => {
        setActive("allMessages")
-    }
+    } // end of showAllMessages
 
     const showMyMessages = () => {
       setActive("myMessages")
-    } 
+    } // end of showMyMessages
 
     return (
       <>
