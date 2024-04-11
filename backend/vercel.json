@@ -6,10 +6,27 @@
             "use": "@vercel/node"
         }
     ],
-    "rewrites": [
+    "routes": [
+        { "handle": "filesystem" },
         {
-            "source": "/(.*)",
-            "destination": "/"
+            "src": "/users/all",
+            "dest": "/server.js"
+        },
+        {
+            "src": "/users/:name",
+            "dest": "/server.js"
+        },
+        {
+            "src": "/users",
+            "dest": "/server.js"
+        },
+        {
+            "src": "/scrape",
+            "dest": "/server.js"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/server.js"
         }
     ]
 }
