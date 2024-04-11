@@ -5,7 +5,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import { useMessagesStore } from '../store/messagesStore';
 
-export default function Dropdown( {index, onDeleteClick, onDeleteForMe, messages, nickname} ) {
+export default function Dropdown( {index, onDeleteClick, onDeleteForMe, name, nickname} ) {
     
     const [open, setOpen] = useState(false);
 
@@ -30,9 +30,8 @@ export default function Dropdown( {index, onDeleteClick, onDeleteForMe, messages
 
         <Dialog className="flex justify-center" fullWidth={true} open={open} onClose={handleDialogClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
             <DialogActions className=''>
-              {messages.map((message, index) => {
-                return message.name === nickname ? 
-                (
+              {name === nickname ? 
+                 (
                     <>
                         <div className='w-[600px] bg-gray-100 flex flex-col items-center gap-1'>
                         <p className={`mb-5 ${font.poppinsMedium}`}> Are you sure you want to delete? </p>
@@ -51,8 +50,7 @@ export default function Dropdown( {index, onDeleteClick, onDeleteForMe, messages
                         </div>
                     </>
                 )
-                })
-              }  
+                }
                 {/* <button className='text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-36 h-12 rounded-lg bg-red-600' onClick={handleDeleteForMe}> Delete for me </button>
                 <button className='text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-48 h-12 rounded-lg bg-red-600' onClick={handleDeleteClick}> Delete for everyone </button> */}
             </DialogActions>

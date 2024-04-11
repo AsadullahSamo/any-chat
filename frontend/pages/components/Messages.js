@@ -59,7 +59,7 @@ export default function Messages( {messages, nickname, onDeleteMessage, onDelete
                             <span className='hover:cursor-pointer mr-5 self-center float-right relative top-0' onClick={() => toggleDropdown(index)}> &#x25be; </span>
                             <p className={`break-words px-4 text-center ${font.poppinsMedium}`}> {user.message}  </p>    
                         </div>
-                        {dropdowns[index] && <div className={`${user.name === nickname ? 'self-end mr-10 -mt-16' : 'ml-96 -mt-16'}`}> <Dropdown messages={messages} nickname={nickname} index={index} onDeleteClick={handleDeleteClick} onDeleteForMe={handleDeleteForMe}/> </div>}
+                        {dropdowns[index] && <div className={`${user.name === nickname ? 'self-end mr-10 -mt-16' : 'ml-96 -mt-16'}`}> <Dropdown name={user.name} nickname={nickname} index={index} onDeleteClick={handleDeleteClick} onDeleteForMe={handleDeleteForMe}/> </div>}
                         <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name === nickname ? "You" : user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
                     </>
                     )}

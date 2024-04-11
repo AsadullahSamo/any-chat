@@ -11,11 +11,16 @@ import {Server} from 'socket.io'
 
 
 // Database operations
-// const mongoose = require("mongoose");
 import mongoose from 'mongoose'
 const app = express();
-app.use(express.json());       // To parse the request body and get the request body     This line is necessary even though method definition is in another file
-app.use(cors());
+app.use(express.json());       
+app.use(cors(
+    {
+        origin: ["https://any-chat-server.vercel.app/", "http://localhost:8080"],
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+));
 
 mongoose.connect(`${process.env.CON_STR}`)
 .then((con) => { 
@@ -34,17 +39,11 @@ const createUser = async (userObj) => {
     }
 }
 
-// Socket connections and management
-// const io = require("socket.io")(3000, {
-//     cors: { 
-//         origin: "http://localhost:8080",
-//         methods: ["GET", "POST"]
-//     }
-// });
 const io = new Server(3000, {
     cors: { 
-        origin: "http://localhost:8080",
-        methods: ["GET", "POST"]
+        origin: ["https://any-chat-server.vercel.app/", "http://localhost:8080"],
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 const connectedUsers = new Map()
