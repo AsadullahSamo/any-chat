@@ -14,7 +14,14 @@ import {Server} from 'socket.io'
 import mongoose from 'mongoose'
 const app = express();
 app.use(express.json());       
-app.use(cors());
+app.use(cors(
+    {
+        origin: ["http://localhost:8080", "https://any-chat-server.vercel.app"],
+        methods: ["GET", "POST"],
+        credentials: true
+        
+    }
+));
 
 mongoose.connect(`${process.env.CON_STR}`)
 .then((con) => { 
