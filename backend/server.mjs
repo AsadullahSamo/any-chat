@@ -16,7 +16,7 @@ const app = express();
 app.use(express.json());       
 app.use(cors(
     {
-        origin: ["https://any-chat-server.vercel.app/", "http://localhost:8080"],
+        origin: ["https://any-chat-server.vercel.app/", "http://localhost:8080", "https://any-chat-server-asadullahsamos-projects.vercel.app/"],
         methods: ["GET", "POST"],
         credentials: true
     }
