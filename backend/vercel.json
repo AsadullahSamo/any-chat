@@ -1,4 +1,9 @@
 {
+    "version": 2,
+    "builds": [
+        { "src": "*.js", "use": "@vercel/node" },
+        { "src": "*.mjs", "use": "@vercel/node" }
+    ],
     "rewrites": [
         {
             "source": "/(.*)",
