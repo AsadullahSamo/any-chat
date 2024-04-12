@@ -3,7 +3,6 @@ import font from '../../styles/Fonts.module.css';
 import { useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
-import { useMessagesStore } from '../store/messagesStore';
 
 export default function Dropdown( {index, onDeleteClick, onDeleteForMe, name, nickname} ) {
     
