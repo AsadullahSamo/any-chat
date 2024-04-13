@@ -17,6 +17,7 @@ export default function Connected() {
     const router = useRouter();
 
     const heightRef = useRef(null);
+    const sectionHeightRef = useRef(null);
     const inputRef = useRef(null);
     const messageRef = useRef(null);
     
@@ -30,6 +31,7 @@ export default function Connected() {
     const [connectedUsers, setConnectedUsers] = useState([])
     const [nickname, setNickname] = useState(router.asPath.split('=')[1]); // ['nickname']
     const [height, setHeight] = useState(0);
+    const [sectionHeight, setSectionHeight] = useState(0);
     const [showEmojis, setShowEmojis] = useState(false);
     const [data, setData] = useState([{name: '', message: '', time: ''}]);
     let [socket, setSocket] = useState(null);
@@ -49,7 +51,10 @@ export default function Connected() {
 
       fetch(`http://localhost:8000/users`)
       .then(res => res.json())
-      .then(data => setConnectedUsers(data))
+      .then(data => {
+        setConnectedUsers(data)
+        setSectionHeight(sectionHeightRef.current?.clientHeight + 20)
+      })
 
       fetch(`http://localhost:8000/users/all`)
       .then(res => res.json())
@@ -153,13 +158,17 @@ export default function Connected() {
       setOpen(false);
     } // end of handleDialogClose
 
+
     const deleteMessageForMe = (index) => {
+      console.log("Index to be deleted is ", index)
       if(active === "allMessages") {
+        console.log("All messages to be deleted are ", data[index].message)
         socket.emit('delete-message-for-me', data[index].message, data[index].time, "allMessages", nickname);
         setData(prevData => prevData.filter((message, i) => message.message !== data[index].message && message.time !== data[index].time));
         const deletedMessages = JSON.parse(localStorage.getItem('deletedMessages')) || [];
         localStorage.setItem('deletedMessages', JSON.stringify([...deletedMessages, [data[index].message, data[index].time]]))
       } else {
+        console.log("My messages to be deleted are ", myMessages[index].message)
         console.log("My messages to be deleted are ", myMessages[index].message)
         socket.emit('delete-message-for-me', myMessages[index].message, myMessages[index].time, "myMessages", nickname);
         setMyMessages(prevData => prevData.filter((message, i) => message.message !== myMessages[index].message && message.time !== myMessages[index].time));
@@ -168,11 +177,14 @@ export default function Connected() {
     } // end of deleteMessageForMe
 
     const deleteMessageForEveryone = (index) => {
+      console.log("Index to be deleted is ", index)
       if(active === "allMessages") {
+        console.log("All messages to be deleted are ", data[index].message)
         if(data[index].name !== nickname) return;
         socket.emit('delete-message', index, data[index]._id, "allMessages", nickname, data[index].message, data[index].time);
         setData(prevData => prevData.filter((message, i) => message.message !== data[index].message && message.time !== data[index].time));
       } else {
+        console.log("My messages to be deleted are ", myMessages[index].message)
         if(myMessages[index].name !== nickname) return;
         socket.emit('delete-message', index, myMessages[index]._id, "myMessages", nickname, myMessages[index].message, myMessages[index].time);
         setMyMessages(prevData => prevData.filter((message, i) => message.message !== myMessages[index].message && message.time !== myMessages[index].time));
@@ -230,8 +242,8 @@ export default function Connected() {
             <p className="text-2xl"> Online: {connectedUsers.length} </p>
           </header>
 
-          <section className="flex">
-            <div ref={heightRef} className="h-[${height}vh] w-[70%] bg-white m-auto rounded-xl">
+          <section className="flex flex-col-reverse md:flex-row md:order-2 order-1" >
+            <div ref={heightRef} className={`mb-5 h-[${height}vh] md:w-[70%] w-[95%] bg-white m-auto rounded-xl `}>
               {/* Dialog */}
               <Dialog fullWidth={true} open={open} onClose={handleDialogClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
                 <DialogContent>
@@ -271,27 +283,31 @@ export default function Connected() {
               </div>
 
               {/* Input */}
-              <footer className='-mt-4 w-[100%] h-[10vh] bg-[#ced9de] rounded-b-lg flex justify-center gap-3'>
-                <Image onClick={handleShowEmojis} src={emoji} alt="Smiling Emoji icon" className={`self-center hover:cursor-pointer`} />
-                <input onKeyDown={handleKeyDown} ref={inputRef} onChange={(e) => e.target.value} type='text' maxLength={1000} className={`self-center ${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg mx-2 pl-4 w-[88%] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} placeholder='Send a message' />
-                <button onClick={handleClick}> <Image src={sendMessage} alt='Send message icon' className='self-center bg-[#9bb0bb] w-8 h-8 p-1 rounded-full hover:cursor-pointer hover:bg-[#5b6063] hover:transition-all hover:duration-500' /> </button>
+              <footer className='-mt-4 w-[100%] h-[10vh] bg-[#ced9de] rounded-b-lg flex justify-center gap-2'>
+                <Image onClick={handleShowEmojis} src={emoji} alt="Smiling Emoji icon" className={`ml-2 md:ml-0 self-center hover:cursor-pointer`} />
+                <input placeholder='Send a message' style={{overflowWrap: 'break-word', resize: 'none', overflow: 'hidden'}} onKeyDown={handleKeyDown} ref={inputRef} onChange={(e) => e.target.value} type='text' maxLength={1000} className={`self-center ${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg mx-2 pl-4 w-[88%] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} />
+                <button onClick={handleClick}> <Image src={sendMessage} alt='Send message icon' className='mr-2 md:mr-0 self-center bg-[#9bb0bb] w-8 h-8 p-1 rounded-full hover:cursor-pointer hover:bg-[#5b6063] hover:transition-all hover:duration-500' /> </button>
               </footer>
             </div>
 
             {/* Connected Users */}
-            <aside className='h-[100vh] w-96 bg-white mr-10 flex flex-col items-center mb-10'>
-              {connectedUsers.length !== 0 &&
-                connectedUsers.map((user, index) => {
-                  return (
-                    <div key={index} className='flex gap-2 mt-5 border-2 border-solid hover:bg-gray-200 border-[#d9d9d9] p-3 w-[90%] hover:cursor-pointer' onClick={() => handleDialogOpen(user)}>
-                      <div className={`text-4xl size-12 bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`}> {user.charAt(0)} </div>
-                      <div className='flex flex-col gap-1'>
-                        <p className={`${font.poppinsMedium}`}> {user} </p>
-                        <p className={`${font.poppinsRegular}`}> Online </p>
+            {/* md:h-[${sectionHeight}px] h-[${sectionHeight}px] */}
+            <aside ref={sectionHeightRef} className={`md:w-96 md:h-[100vh] h-[30vh] overflow-y-auto mt-5 self-center md:self-start mx-auto md:mx-auto w-[100%] bg-white mr-10 mb-10`}>
+              {/* <h1 className='md:hidden text-2xl font-bold text-center mt-5 hover:cursor-pointer' onClick={handleUserDialogOpen}> Open users </h1> */}
+              <div className={`overflow-y items-center flex flex-col`}>
+                {connectedUsers.length !== 0 &&
+                  connectedUsers.map((user, index) => {
+                    return (
+                      <div key={index} className='md:mx-2 mx-2 w-[90%] my-2 flex gap-2 mt-5 border-2 border-solid hover:bg-gray-200 border-[#d9d9d9] p-3 hover:cursor-pointer' onClick={() => handleDialogOpen(user)}>
+                        <div className={`text-4xl size-12 bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`}> {user.charAt(0)} </div>
+                        <div className='flex flex-col gap-1'>
+                          <p className={`${font.poppinsMedium}`}> {user} </p>
+                          <p className={`${font.poppinsRegular}`}> Online </p>
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+              </div>
             </aside>
 
           </section>

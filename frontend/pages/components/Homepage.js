@@ -14,14 +14,14 @@ export default function HomePage() {
 
   return (
     
-    <div className='flex'>
-      <div className='min-h-screen w-[50%] bg-[#edf0f8]'> 
+    <div className='flex md:flex-row flex-col'>
+      <div className='w-[100%] h-[10%] md:min-h-screen md:w-[50%] bg-[#edf0f8]'> 
         <Image src={logo} className={`my-10 mx-10`}/>
-        <h1 className={`${font.poppinsExtraBold} mt-56 mx-10 text-5xl leading-snug`}> Chat <br/> anywhere <br/> with anyone </h1>
+        <h1 className={`${font.poppinsExtraBold} mt-10 md:mt-56 mx-10 text-5xl leading-snug`}> Chat <br/> anywhere <br/> with anyone </h1>
         <button onKeyDown={handleKeyDown} className='my-10 mx-10 text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-36 h-12 rounded-lg bg-[#434CE6]'> <Link href="/components/ChatPage"> Get Started </Link> </button>
       </div>
 
-			<div className='min-h-screen w-[50%] bg-[#d8dbe3]'> 
+			<div className='w-[100%] h-[30%] md:min-h-screen md:w-[50%] bg-[#d8dbe3]'> 
         <Image src={mobilePic} className={`mt-20 mx-auto`} width={450} height={450}/>
       </div>
 

@@ -17,10 +17,12 @@ export default function Dropdown( {index, onDeleteClick, onDeleteForMe, name, ni
     } // end of handleDialogClose
 
     const handleDeleteClick = () => {
+        console.log(index)
         onDeleteClick(index);
     } // end of handleDeleteClick
 
     const handleDeleteForMe = () => {
+        console.log(index)
         onDeleteForMe(index);
     }
 
@@ -50,8 +52,6 @@ export default function Dropdown( {index, onDeleteClick, onDeleteForMe, name, ni
                     </>
                 )
                 }
-                {/* <button className='text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-36 h-12 rounded-lg bg-red-600' onClick={handleDeleteForMe}> Delete for me </button>
-                <button className='text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-48 h-12 rounded-lg bg-red-600' onClick={handleDeleteClick}> Delete for everyone </button> */}
             </DialogActions>
         </Dialog>
 

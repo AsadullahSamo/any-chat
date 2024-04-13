@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import logo from '../../public/assets/icons/logo.svg';
 import font from '../../styles/Fonts.module.css';
 
-export default function Card( { siteUrl } ) {
+export default function Card( { siteUrl, messagePart, name, nickname } ) {
 
    
-
+    const [loading, setLoading] = useState(true); 
     const [image, setImage] = useState(logo);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -14,6 +14,7 @@ export default function Card( { siteUrl } ) {
     const [url, setUrl] = useState('');
 
     useEffect(() => {
+        setLoading(true);
         fetch(`http://localhost:8000/scrape?url=${siteUrl}`)
         .then(res => res.json())
         .then(data => {
@@ -23,11 +24,13 @@ export default function Card( { siteUrl } ) {
           setFavicon(data.favicon);
           setSiteName(data.siteName);
           setUrl(data.url);
+          setLoading(false);
         })
         .catch(error => {
           console.error('An error occurred:', error);
+          setLoading(false);
         });
-    }, []);
+    }, [siteUrl]);
 
     // useEffect(() => {
     //     const apiKey = 'pk_379542c22162196f7598828469e2bc938ccdf938';
@@ -55,7 +58,12 @@ export default function Card( { siteUrl } ) {
     // }, []);
 
     return (
-        <article className="-mt-5 max-w-sm rounded overflow-hidden shadow-lg">
+        <article className="-mt-5 max-w-sm rounded overflow-hidden shadow-lg" style={{border: '1px solid white'}}>
+            {messagePart.length > 0 && <p className={`bg-[#EDF0F8] break-words text-center ${font.poppinsMedium}`}>{messagePart}</p>  }
+            {loading ? (
+                <div>Loading...</div> // Placeholder UI while loading
+            ) : (
+            <>
             <a href={url} target='_blank' rel="noopener noreferrer">
                 <img className="w-full" src={image} alt="image" />
             </a>
@@ -71,6 +79,8 @@ export default function Card( { siteUrl } ) {
                     {siteName}
                 </a>
             </div>
+            </>
+            )}
         </article>
     );
 }
