@@ -20,7 +20,37 @@ Dive into the realm of **Any Chat**, a real-time messaging platform that connect
 
 - **Error Handling**: Ensure the app's resilience by handling user actions like browser refreshes, chat disconnections, or new connections. Grasp the significance of a seamless experience even in unexpected scenarios.
 
-### Requirements
+### Current App features
+
+- **Messaging Features**: Enjoy seamless private and group messaging capabilities to connect with friends, colleagues, or groups effortlessly.
+
+- **Message Deletion**: Take control of your conversations with the ability to delete messages for yourself or everyone in both private and group chats
+
+- **Real-time Updates on connected/disconnected users**: Stay informed with real-time updates on online users and receive notifications about connected and disconnected users instantly
+
+- **User Filteration**: filter connected users easily for private messaging
+
+- **Mobile Responsiveness**: Enjoy the Any-Chat experience on the go with seamless mobile responsiveness. Access your chats anytime, anywhere, from any device.
+
+- **Link Preview**: Enhance your messaging experience with link preview functionality. Preview shared links directly within the chat to get a glimpse of the content before clicking.
+
+- **Message Display Customization**: Personalize your chat experience with customized message displays. Messages are displayed differently based on the sender and receiver. Differentiate between sender and receiver's message
+
+- **Emoji Support**: Express yourself with a wide range of emojis supported within the chat
+
+### Upcoming features
+
+We're constantly striving to enhance the Any-Chat experience and bring you exciting new features and improvements. Here's a sneak peek at what's coming soon:
+
+- **File Sharing System**: Simplify collaboration and information exchange with our upcoming file sharing system. Seamlessly share documents, images, videos, and more directly within your chat conversations.
+
+- **Reply Feature**: Seamlessly reply to specific messages within a conversation, similar to the functionality found in popular messaging apps like WhatsApp.
+
+**and many many more.**
+
+Stay tuned for these exciting updates and more as we continue to evolve and grow Any-Chat based on your needs and preferences!
+
+### User Requirements
 
 - Create an onboarding page that includes a logo, a title, and a "Get Started" button. The page should feature a split-view layout with two columns. The right column should have a different background and display an image of a hand holding a phone.
 - Navigate the user to a centered page with the logo after clicking the "Get Started" button. On this page, users should be able to enter a nickname for the chat. The nickname should be validated to ensure it is between 4 and 60 characters in length. The "Join Chat" button should only be clickable when the nickname is properly validated. Clicking the button should move the user to the main chat page.
