@@ -3,10 +3,14 @@ import font from '../../styles/Fonts.module.css';
 import { useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 export default function Dropdown( {index, onDeleteClick, onDeleteForMe, name, nickname} ) {
     
     const [open, setOpen] = useState(false);
+    const theme = useTheme();
+    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
     const handleDialogOpen = () => {
         setOpen(true);
@@ -29,14 +33,14 @@ export default function Dropdown( {index, onDeleteClick, onDeleteForMe, name, ni
   return (
     <div className="relative inline-block text-left">
 
-        <Dialog className="flex justify-center" fullWidth={true} open={open} onClose={handleDialogClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
+        <Dialog fullWidth={fullScreen} className="flex justify-center" open={open} onClose={handleDialogClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
             <DialogActions className=''>
               {name === nickname ? 
                  (
                     <>
-                        <div className='w-[600px] bg-gray-100 flex flex-col items-center gap-1'>
+                        <div className='w-[300px] md:w-[600px] bg-gray-100 flex flex-col items-center gap-1'>
                         <p className={`mb-5 ${font.poppinsMedium}`}> Are you sure you want to delete? </p>
-                            <div className='flex justify-start gap-3'>
+                            <div className='flex-col md:flex-row flex justify-start gap-1 md:gap-3'>
                                 <button className='mb-5 text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-48 h-12 rounded-lg bg-red-600' onClick={handleDeleteForMe}> Delete for me </button>
                                 <button className='text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-48 h-12 rounded-lg bg-red-600' onClick={handleDeleteClick}> Delete for everyone </button>
                             </div>
