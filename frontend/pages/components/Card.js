@@ -58,7 +58,7 @@ export default function Card( { siteUrl, messagePart, name, nickname } ) {
     // }, []);
 
     return (
-        <article className="-mt-5 max-w-sm rounded overflow-hidden shadow-lg" style={{border: '1px solid white'}}>
+        <article className="-mt-5 md:max-w-sm rounded overflow-hidden shadow-lg" style={{border: '1px solid white'}}>
             {messagePart && messagePart.length > 0 && <p className={`bg-[#EDF0F8] break-words text-center ${font.poppinsMedium}`}>{messagePart}</p>  }
             {loading ? (
                 <div>Loading...</div> // Placeholder UI while loading
