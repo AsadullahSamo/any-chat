@@ -1,4 +1,3 @@
-const fs = require("fs");
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({        // In this schema, we can define the properties we want to have for our model
@@ -18,9 +17,6 @@ const userSchema = new mongoose.Schema({        // In this schema, we can define
         type: String,
     },
     sender: {
-        type: String,
-    },
-    r: {
         type: String,
     },
     isFile: {

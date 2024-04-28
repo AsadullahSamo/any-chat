@@ -19,15 +19,6 @@ import Button from '@mui/material/Button';
 import AlertDialog from './AlertDialog';
 
 const VisuallyHiddenInput = styled('input')({
-  // clip: 'rect(0 0 0 0)',
-  // clipPath: 'inset(50%)',
-  // height: 1,
-  // overflow: 'hidden',
-  // position: 'absolute',
-  // bottom: 0,
-  // left: 0,
-  // whiteSpace: 'nowrap',
-  // width: 1,
   display: 'none'
 });
 
@@ -42,14 +33,12 @@ export default function Connected() {
     const inputRef = useRef(null);
     const messageRef = useRef(null);
 
-    const [plusOpen, setPlusOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [emojis, setEmojis] = useState([]);
     const [userPosition, setUserPosition] = useState("top")
     const [myMessages, setMyMessages] = useState([{name: '', message: '', time: ''}]);
     const [allMessages, setAllMessages] = useState([{name: '', message: '', time: ''}]);
     const [open, setOpen] = useState(false);
-    const [phone, setPhone] = useState('');
     const [userDetails, setUserDetails] = useState({name: '', phone: ''})
     const [active, setActive] = useState("allMessages");
     const [connectedUsers, setConnectedUsers] = useState([])
@@ -109,6 +98,20 @@ export default function Connected() {
       let myContacts = JSON.parse(localStorage.getItem("myContacts")) || [];
       setMyContacts(myContacts)
     }, [])
+
+    useEffect(() => {
+      const handleScroll = () => {
+          if(window.scrollY < 290) {
+            setUserPosition("top")
+          } else {
+            setUserPosition("bottom")
+          }
+        }
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+          window.removeEventListener('scroll', handleScroll);
+        }
+    }, [userPosition])
 
 
     useEffect(() => {
@@ -297,7 +300,7 @@ export default function Connected() {
     } // end of handleChange
 
     const navigateUser = (e) => {
-      if(window.scrollY < 390) {
+      if(window.scrollY < 290) {
         window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }) 
       } else {
         window.scrollTo({ top: 0, bottom: 0, behavior: 'smooth'}) 
@@ -347,8 +350,7 @@ export default function Connected() {
       if(myContacts.some(contact => contact.phone === details.phone)) return;
       localStorage.setItem("myContacts", JSON.stringify([...myContacts, {name: details.name, phone: details.phone}]) )
       setMyContacts([...myContacts, {name: details.name, phone: details.phone}])
-    }
-
+    } // end of hanldeUserAddition
     
     
     return (
@@ -419,12 +421,12 @@ export default function Connected() {
                     <Image src={link} alt='File sharing link icon' className='mt-4 mr-1 self-center bg-[#9bb0bb] w-8 h-8 p-1 rounded-full hover:cursor-pointer hover:bg-[#5b6063] hover:transition-all hover:duration-500'  />
                     <VisuallyHiddenInput type="file" onChange={handleFileChange}/>
                   </Button>
-                  {/* <input type='file' onChange={handleFileChange} /> */}
                 </form>
               </footer>
             }
             </div>
 
+            {/* Top/bottom cursor mover */}
             <div className={`transition-all duration-500 fixed left-[65%] ${userPosition === "bottom" ? 'top-[80%]' : 'top-[93%]'} text-center size-12 bg-black mx-5 rounded-full animate-bounce`}>
               {userPosition === "top" ? 
                (<span className='text-4xl font-bold cursor-pointer text-white' onClick={navigateUser}> &#8681; </span> )
@@ -436,12 +438,12 @@ export default function Connected() {
             {/* Connected Users */}
           {active === "allMessages" &&
             <aside ref={sectionHeightRef} className={`md:w-96 md:h-[100vh] h-[30vh] overflow-y-auto mt-5 self-center md:self-start mx-auto md:mx-auto w-[100%] bg-white mr-10 mb-10`}>
-            <input placeholder='Search the user to message privately' onChange={handleSearchChange} type='search' maxLength={1000} className={`mt-5 ${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg mx-2 pl-4 w-[95%] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} />
+            <input placeholder='Search the connected users' onChange={handleSearchChange} type='search' maxLength={1000} className={`mt-5 ${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg mx-2 pl-4 w-[95%] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} />
               <div className={`overflow-y items-center flex flex-col`}>
                 {connectedUsers.length !== 0 &&
                   connectedUsers.map((user, index) => {
                     return (
-                      <div key={index} className='md:mx-2 mx-2 w-[90%] my-2 flex gap-2 mt-5 border-2 border-solid hover:bg-gray-200 border-[#d9d9d9] p-3 hover:cursor-pointer' onClick={() => handleDialogOpen(user)}>
+                      <div key={index} className='md:mx-2 mx-2 w-[90%] my-2 flex gap-2 mt-5 border-2 border-solid hover:bg-gray-200 border-[#d9d9d9] p-3 hover:cursor-pointer'>
                         <div className={`text-4xl size-12 bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`}> {user.charAt(0)} </div>
                         <div className='flex flex-col gap-1'>
                           <p className={`${font.poppinsMedium}`}> {user} </p>
@@ -453,6 +455,7 @@ export default function Connected() {
               </div>
             </aside>
           }
+
           {active === "myMessages" &&
             (
               <aside ref={sectionHeightRef} className={`md:w-96 md:h-[100vh] h-[30vh] overflow-y-auto mt-5 self-center md:self-start mx-auto md:mx-auto w-[100%] bg-white mr-10 mb-10`}>

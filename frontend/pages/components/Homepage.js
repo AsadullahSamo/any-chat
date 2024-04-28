@@ -16,7 +16,6 @@ export default function HomePage() {
       setIsAccount(true)
       setQuery(myDetails.name)
     }
-    console.log(myDetails)
   }, [])
 
   return (

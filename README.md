@@ -36,19 +36,11 @@ Dive into the realm of **Any Chat**, a real-time messaging platform that connect
 
 - **Message Display Customization**: Personalize your chat experience with customized message displays. Messages are displayed differently based on the sender and receiver. Differentiate between sender and receiver's message
 
-- **Emoji Support**: Express yourself with a wide range of emojis supported within the chat
-
-### Upcoming features
-
-We're constantly striving to enhance the Any-Chat experience and bring you exciting new features and improvements. Here's a sneak peek at what's coming soon:
-
 - **File Sharing System**: Simplify collaboration and information exchange with our upcoming file sharing system. Seamlessly share documents, images, videos, and more directly within your chat conversations.
 
-- **Reply Feature**: Seamlessly reply to specific messages within a conversation, similar to the functionality found in popular messaging apps like WhatsApp.
+- **Edit Chat**: Allow users to edit their previously sent messages for correction or clarification.
 
-**and many many more.**
-
-Stay tuned for these exciting updates and more as we continue to evolve and grow Any-Chat based on your needs and preferences!
+- **Emoji Support**: Express yourself with a wide range of emojis supported within the chat
 
 ### User Requirements
 

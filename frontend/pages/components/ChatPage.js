@@ -48,6 +48,20 @@ export default function ChatPage() {
 		return false
 	} // end of isValidPhoneNumber
 
+	const handleKeyDown = (e) => {
+		if(e.key === 'Enter') {
+			handleClick()
+		}
+	} // end of handleKeyDown
+
+	useEffect(() => {
+		window.addEventListener('keydown', handleKeyDown)
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown)
+		}
+	}, [query])
+
+
   
 	return (
 		<div className={`min-h-screen w-[100%] bg-[#edf0f8]`}>

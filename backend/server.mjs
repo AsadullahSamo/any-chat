@@ -11,14 +11,9 @@ import { uploadCloudinary } from "./services/cloudinary.mjs";
 import path from 'path'
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-// import multer from "multer";
-// const upload = multer({ dest: 'upload/' })
 import {upload} from './middlewares/multer.mjs'
-// const {upload} = pkg
-
 
 // Database operations
-import mongoose from 'mongoose'
 const app = express();
 app.use(express.json());       
 app.use(cors(
@@ -26,14 +21,15 @@ app.use(cors(
         origin: ["http://localhost:8080", "https://any-chat-server.vercel.app"],
         methods: ["GET", "POST"],
         credentials: true
-        
     }
 ));
+
+import mongoose from 'mongoose'
 
 mongoose.connect(`${process.env.CON_STR}`)
 .then((con) => { 
     console.log("Connected to MongoDB")
-    const PORT = 8000;
+    const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
@@ -54,8 +50,10 @@ const io = new Server(3000, {
         credentials: true
     }
 });
+
 const connectedUsers = new Map()
 let myPhone;
+
 io.on("connection", socket => {    
 
     socket.on('user-connected', async (nickname, phone) => {
@@ -78,7 +76,6 @@ io.on("connection", socket => {
     });
 
     socket.on('user-added', async (name, phone) => {
-        console.log(`I will be executed now with name ${name} and phone ${phone}`)
         const user = await User.find({phone: phone})
         let userObj;
         if (user.length === 0) {        
@@ -120,13 +117,9 @@ io.on("connection", socket => {
 
     
     socket.on("send-message-to-user", async (isFile, size, file, message, sender, time, phone, senderPhone) => {
-        console.log("Phone number is ", phone)
         let myPhone = phone.replace("+", "")
         let sPhone = senderPhone.replace("+", "")
-        console.log("My phone number is ", myPhone)
-        console.log("Sender phone number is ", sPhone)
         let receiverId = await User.findOne({phone: myPhone}, {socketId: 1, _id: 0})     
-        console.log(`Receiver id is ${receiverId.socketId}`)
         
         let userObj = {
             name: sender,
@@ -163,20 +156,13 @@ io.on("connection", socket => {
 
     socket.on("delete-message", async (index, id, active, nickname, message, time) => {
         if(active === "allMessages") {
-            console.log("Message to be deleted has id", id)
             const deleteMessage = await User.deleteOne({message: message, time: time, receiver: "all"});
-            console.log("Deleted message for all is ", deleteMessage)
             socket.broadcast.emit("delete-message", index, "allMessages", message, time)
         } else {
             const receiver = await User.find({ message: message, time: time })
-            console.log(`Message is ${message} and time is ${time}`)
-            console.log("Receiver is ", receiver)
             const phone = receiver[0].receiver
-            console.log(`Phone number is ${phone}`)
             const receiverId = await User.findOne({phone: phone}, {socketId: 1, _id: 0})
-            console.log(`Receiver id is ${receiverId.socketId}`)
-
-            console.log(`Receiver id is ${receiverId.socketId}`)
+            console.log("Receiver ID is ", receiverId)
             socket.to(receiverId.socketId).emit("delete-message", index, "myMessages", message, time)
             const deletedMessage = await User.deleteMany({ $and: [{ message: message, time: time }, { receiver: { $ne: "all" } }]});
             console.log(deletedMessage)
@@ -186,11 +172,6 @@ io.on("connection", socket => {
     socket.on("delete-message-for-me", async (phone, message, time, active, name) => {
         if(active === "myMessages") {
             let myPhone = phone.replace("+", "")
-            // const receiver = await User.find({ message: message, time: time })
-            // console.log("Receiver is ", receiver)
-            // const phone = receiver[0].receiver || receiver[1].sender
-            // console.log(`Phone number is ${phone}`)
-
             const deleteMessage = await User.deleteOne({message: message, time: time, $or: [{receiver: myPhone}, {sender: myPhone}]});
             console.log("Deleted message for me is ", deleteMessage)
         }
@@ -286,17 +267,7 @@ app.get("/scrape", async (req, res) => {
     }
 })
 
-
-// const storage = multer.diskStorage({
-//         destination: function (req, file, cb) {
-//           cb(null, 'uploads')
-//         },
-//         filename: function (req, file, cb) {
-//           cb(null, file.originalname)
-//         }
-//       })
-      
-// const upload = multer({ storage: storage })
+// FILE UPLOAD
 let fileUrl;
 app.post('/upload', upload.single("file"), async (req, res) => {
     if (!req.file) {
@@ -324,6 +295,7 @@ app.use('/uploads', express.static('/uploads'));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
 app.get('/uploads/:fileName', async (req, res) => {
     const file = req.params.fileName;
     const filePath = path.join(__dirname, 'uploads', file);
