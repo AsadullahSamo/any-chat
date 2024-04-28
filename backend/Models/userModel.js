@@ -10,8 +10,6 @@ const userSchema = new mongoose.Schema({        // In this schema, we can define
     },
     message: {
         type: String,
-        minLength: [1], 
-        maxLength: [1000],
     },
     time: {
         type: String,
@@ -25,6 +23,21 @@ const userSchema = new mongoose.Schema({        // In this schema, we can define
     r: {
         type: String,
     },
+    isFile: {
+        type: Boolean,
+    },
+    size: {
+        type: Number,
+    },
+    file: {
+        type: String,
+    },
+    phone: {
+        type: Number,
+    },
+    fileUrl: {
+        type: String,
+    }
 })
 
 const Users = mongoose.model("users", userSchema); 
