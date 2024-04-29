@@ -213,10 +213,10 @@ export default function Connected() {
 
     }, [socket]);
 
-    const handleDialogOpen = (name, phone) => {
-      setUserDetails({name, phone})
-      setOpen(true);
-    } // end of handleDialogOpen
+    // const handleDialogOpen = (name, phone) => {
+    //   setUserDetails({name, phone})
+    //   setOpen(true);
+    // } // end of handleDialogOpen
 
     const handleDialogClose = () => {
       setOpen(false);
@@ -279,7 +279,11 @@ export default function Connected() {
       
     const handleKeyDown = (e) => {
       if (e.key === 'Enter') {
-        handleClick();
+        if(active === "allMessages") {
+          handleClick();
+        } else {
+          handleSpecificMessage();
+        }
       }
     } // end of handleKeyDown
 
@@ -387,19 +391,6 @@ export default function Connected() {
 
           <section className="flex flex-col-reverse md:flex-row md:order-2 order-1" >
             <div ref={heightRef} className={`mb-5 h-[${height}vh] md:w-[70%] w-[95%] bg-white m-auto rounded-xl `}>
-              {/* Dialog */}
-              <Dialog fullWidth={fullScreen} open={open} onClose={handleDialogClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
-                <DialogContent>
-                  <input ref={messageRef} onChange={(e) => e.target.value} type='text' maxLength={1000} className={`${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg -ml-[12px] md:mx-2 pl-4 w-[19.5rem] md:w-[33rem] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} placeholder={`Send a message to ${name}`} />
-                </DialogContent>
-                <DialogActions className='flex justify-end gap-5'>
-                  <button onClick={handleSpecificMessage} className='text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-36 h-12 rounded-lg bg-[#434CE6]'> Send </button>
-                  <Button component="label" role={undefined} variant="text" tabIndex={-1}>
-                    <Image src={link} alt='Send message icon' className='mr-2 md:mr-0 self-center bg-[#9bb0bb] w-8 h-8 p-1 rounded-full hover:cursor-pointer hover:bg-[#5b6063] hover:transition-all hover:duration-500' />
-                    <VisuallyHiddenInput type="file" onChange={handleSpecificFileChange}/>
-                  </Button>
-                </DialogActions>
-              </Dialog>
 
               {active === "myMessages" &&
                 <div className='rounded-t-lg bg-gray-100 w-[100%] h-[9vh]'> 
@@ -422,12 +413,12 @@ export default function Connected() {
               {/* Messages */}
               <div className='flex flex-col mb-10 gap-10'>
                 {userDetails.name === '' && active === "myMessages" &&
-                  <p className={`${font.poppinsRegular} text-center text-2xl`}> Click on a user to view their messages </p>
+                  <p className={`${font.poppinsRegular} text-center text-2xl`}> Select a user to view their messages OR your messages sent to them, if any</p>
                 }
                 {active === "allMessages" ?
                   <Messages messages={data} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
                 :
-                  <Messages messages={myMessages} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
+                  <Messages userDetailsName={userDetails.name} messages={myMessages} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
                 }
               </div>
 
@@ -445,6 +436,7 @@ export default function Connected() {
               </div>
 
               {/* Input */}
+              {userDetails.name !== '' &&
               <footer className='mb-4 fixed top-[90%] w-[70%] h-[10vh] bg-[#ced9de] rounded-b-lg flex justify-center gap-2'>
                 <Image onClick={handleShowEmojis} src={emoji} alt="Smiling Emoji icon" className={`ml-1 md:ml-2 self-center hover:cursor-pointer`} />
                 <input placeholder='Send a message' onKeyDown={handleKeyDown} ref={inputRef} onChange={(e) => e.target.value} type='text' maxLength={1000} className={`self-center ${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg mx-2 pl-4 w-[88%] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} />
@@ -456,6 +448,7 @@ export default function Connected() {
                   </Button>
                 </form>
               </footer>
+              }
             </div>
 
             {/* Top/bottom cursor mover */}

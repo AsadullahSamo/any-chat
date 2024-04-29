@@ -51,6 +51,7 @@ export default function Dropdown( {message, index, onDeleteClick, onDeleteForMe,
     const handleEdit = () => {
         buttonRef.current && setBtnRefValue(buttonRef.current.innerText)
         onEdit(index, btnRefValue);
+        setOpen(false);
     };
 
     const handleBlur = (e) => {

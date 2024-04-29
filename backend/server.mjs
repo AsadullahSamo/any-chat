@@ -146,11 +146,7 @@ io.on("connection", socket => {
             socket.broadcast.emit("delete-message", index, "allMessages", message, time)
         } else {
             const receiver = await User.find({ message: message, time: time }, {receiver: 1, _id: 0})
-            // const phone = receiver.receiver
-            console.log("Receiver phone is ", receiver[0].receiver)
-
             const receiverId = await User.findOne({phone: receiver[0].receiver}, {socketId: 1, _id: 0})
-            console.log("Receiver ID is ", receiverId.socketId)
             socket.to(receiverId.socketId).emit("delete-message", index, "myMessages", message, time)
             const deletedMessage = await User.deleteMany({ $and: [{ message: message, time: time }, { receiver: { $ne: "all" } }]});
             console.log(deletedMessage)
@@ -163,11 +159,7 @@ io.on("connection", socket => {
             socket.broadcast.emit("edit-message", index, newData, active)
         } else {
             const receiver = await User.find({ message: oldData, time: time }, {receiver: 1, _id: 0})
-            // const phone = receiver[0].receiver
-            console.log("Receiver phone is ", receiver[0].receiver)
-
             const receiverId = await User.findOne({phone: receiver[0].receiver}, {socketId: 1, _id: 0})
-            console.log("Receiver ID is ", receiverId.socketId)
             socket.to(receiverId.socketId).emit("edit-message", index, newData, active)
             const updateMessage = await User.updateMany({ $and: [{ message: oldData, time: time }, { receiver: { $ne: "all" } }]}, {message: newData});
             

@@ -5,7 +5,7 @@ import Dropdown from './Dropdown';
 import { useState, useEffect } from 'react';
 import FilePreview from './FilePreview';
 
-export default function Messages( {messages, nickname, onDeleteMessage, onDeleteForMe, onEdit, isFile} ) {
+export default function Messages( {userDetailsName, messages, nickname, onDeleteMessage, onDeleteForMe, onEdit, isFile} ) {
 
     const [dropdowns, setDropdowns] = useState(Array.isArray(messages) ? Array(messages.length).fill(false) : []);
     const [index, setIndex] = useState(0);
@@ -51,7 +51,7 @@ export default function Messages( {messages, nickname, onDeleteMessage, onDelete
         return null;
     }
     
-    return messages && (
+    return messages && userDetailsName !== '' && (
          messages.map((user, messageIndex) => {
             return (
                 <React.Fragment key={messageIndex}>
