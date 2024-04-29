@@ -36,6 +36,7 @@ export default function Connected() {
     const [loading, setLoading] = useState(true);
     const [emojis, setEmojis] = useState([]);
     const [userPosition, setUserPosition] = useState("top")
+    const [selectedUser, setSelectedUser] = useState('');
     const [myMessages, setMyMessages] = useState([{name: '', message: '', time: ''}]);
     const [allMessages, setAllMessages] = useState([{name: '', message: '', time: ''}]);
     const [open, setOpen] = useState(false);
@@ -60,6 +61,7 @@ export default function Connected() {
     useEffect(() => {
       setLoading(true);
       const deletedMessages = JSON.parse(localStorage.getItem('deletedMessages'));
+      const myDeletedMessages = JSON.parse(localStorage.getItem('myDeletedMessages'));
       fetch('https://emoji-api.com/emojis?access_key=81b5e5f1c8f229449b4936039e5e60899f95f4c3')
       .then(res => res.json())
       .then(data => setEmojis(data))   
@@ -92,7 +94,7 @@ export default function Connected() {
       fetch(`http://localhost:8000/users/${myDetails.phone}`)
       .then(res => res.json())
       .then(data => {
-        setMyMessages(data)
+          setMyMessages(data);
       })
 
       let myContacts = JSON.parse(localStorage.getItem("myContacts")) || [];
@@ -156,6 +158,11 @@ export default function Connected() {
         }
       });
 
+      socket.on('user-details', (user) => {
+        setMyMessages(user)
+        inputRef.current.value = '';
+      })
+
       return () => {
           socket.off('receive-message', handleReceivedMessage);
       };
@@ -190,6 +197,7 @@ export default function Connected() {
             setData(prevData => prevData.filter((message, i) => message.message != msg && message.time !== t));
           }
           else {
+            console.log(`Deleting message for me ${msg}`)
             setMyMessages(prevData => prevData.filter((message, i) => message.message != msg && message.time !== t));
           }
         })
@@ -198,6 +206,7 @@ export default function Connected() {
           if(activeTab === "allMessages") {
             setData(prevData => prevData.map((message, i) => i === index ? {...message, message: newData} : message))
           } else {
+            console.log(`Editing message for me ${newData}`)
             setMyMessages(prevData => prevData.map((message, i) => i === index ? {...message, message: newData} : message))
           }
         })
@@ -215,14 +224,16 @@ export default function Connected() {
 
     const deleteMessageForMe = (index) => {
       if(active === "allMessages") {
-        socket.emit('delete-message-for-me', data[index].message, data[index].time, "allMessages", nickname);
+        // socket.emit('delete-message-for-me', data[index].message, data[index].time, "allMessages", nickname);
         setData(prevData => prevData.filter((message, i) => message.message !== data[index].message && message.time !== data[index].time));
         const deletedMessages = JSON.parse(localStorage.getItem('deletedMessages')) || [];
         localStorage.setItem('deletedMessages', JSON.stringify([...deletedMessages, [data[index].message, data[index].time]]))
       } else {
-        let myDetails = JSON.parse(localStorage.getItem("myDetails"))
-        socket.emit('delete-message-for-me', myDetails.phone, myMessages[index].message, myMessages[index].time, "myMessages", nickname);
+        // let myDetails = JSON.parse(localStorage.getItem("myDetails"))
+        // socket.emit('delete-message-for-me', myDetails.phone, myMessages[index].message, myMessages[index].time, "myMessages", nickname);
         setMyMessages(prevData => prevData.filter((message, i) => message.message !== myMessages[index].message && message.time !== myMessages[index].time));
+        const myDeletedMessages = JSON.parse(localStorage.getItem('myDeletedMessages')) || [];
+        localStorage.setItem('myDeletedMessages', JSON.stringify([...myDeletedMessages, [myMessages[index].message, myMessages[index].time]]))
       }
     } // end of deleteMessageForMe
 
@@ -252,18 +263,18 @@ export default function Connected() {
       if(inputRef.current.value === '') return;
       socket.emit('send-message', false, 0, '', inputRef.current.value, nickname, `${new Date().toLocaleString()}`);
       setHeight(heightRef.current.clientHeight + 10);
-      // setData([...data, {name: nickname, message: inputRef.current.value, time: `${new Date().toLocaleString()}`}])
       setData([...data, {name: nickname, message: inputRef.current.value, size: 0, isFile: false, time: `${new Date().toLocaleString()}`}])
       inputRef.current.value = '';
     }; // end of handleClick
 
     const handleSpecificMessage = () => {
-      if(messageRef.current.value === '') return;
+      const message = inputRef.current.value;
+      if(inputRef.current.value === '') return;
       const myDetails = JSON.parse(localStorage.getItem("myDetails"))
-      socket.emit('send-message-to-user', false, 0, '', messageRef.current.value, router.asPath.split('=')[1], `${new Date().toLocaleString()}`, userDetails.phone, myDetails.phone)
-      // setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: messageRef.current.value, time: `${new Date().toLocaleString()}`}])
-      setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: messageRef.current.value, size: 0, isFile: false, time: `${new Date().toLocaleString()}`}])
-      setOpen(false);
+      socket.emit('send-message-to-user', false, 0, '', inputRef.current.value, router.asPath.split('=')[1], `${new Date().toLocaleString()}`, userDetails.phone, myDetails.phone)
+      setHeight(heightRef.current.clientHeight + 10);
+      setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: message, size: 0, isFile: false, time: `${new Date().toLocaleString()}`}])
+      inputRef.current.value = '';
     } // end of handleSpecificMessage
       
     const handleKeyDown = (e) => {
@@ -351,6 +362,14 @@ export default function Connected() {
       localStorage.setItem("myContacts", JSON.stringify([...myContacts, {name: details.name, phone: details.phone}]) )
       setMyContacts([...myContacts, {name: details.name, phone: details.phone}])
     } // end of hanldeUserAddition
+
+    const handleUserDetails = (name, phone) => {
+      setSelectedUser(name)
+      setUserDetails({name, phone})
+      let myDetails = JSON.parse(localStorage.getItem("myDetails"))
+      let myDeletedMessages = JSON.parse(localStorage.getItem("myDeletedMessages")) || [];
+      socket.emit('user-details', myDetails.phone, name, phone, myDeletedMessages)
+    } // end of handleUserDetails
     
     
     return (
@@ -382,6 +401,18 @@ export default function Connected() {
                 </DialogActions>
               </Dialog>
 
+              {active === "myMessages" &&
+                <div className='rounded-t-lg bg-gray-100 w-[100%] h-[9vh]'> 
+                  <div className={`flex justify-center gap-5 px-4 text-white rounded-lg me-2`}>
+                    <p className={`text-5xl size-[60px] bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`}> {userDetails.name.charAt(0) || 'A'} </p>
+                    <div className='flex flex-col gap-1'>
+                      <p className={`mt-1 text-black text-xl ${font.poppinsMedium} self-center`}> {userDetails.name || 'All my messages'} </p>
+                      <p className={`text-black ${font.poppinsRegular}`}> {userDetails.phone || JSON.parse(localStorage.getItem("myDetails")).phone} </p>
+                    </div>
+                  </div>
+                </div>
+              }
+
               {/* Navigation */}
               <nav className="mb-10 flex flex-wrap justify-center text-md font-bold text-center text-white bg-[#343A40]">
                 <button className={`px-4 py-3 ${active === "myMessages" ? `bg-blue-600` : ""} hover:bg-gray-500 text-white rounded-lg  hover:cursor-pointer me-2`} onClick={showMyMessages}> View my messages </button>
@@ -390,9 +421,12 @@ export default function Connected() {
 
               {/* Messages */}
               <div className='flex flex-col mb-10 gap-10'>
+                {userDetails.name === '' && active === "myMessages" &&
+                  <p className={`${font.poppinsRegular} text-center text-2xl`}> Click on a user to view their messages </p>
+                }
                 {active === "allMessages" ?
                   <Messages messages={data} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
-                  :
+                :
                   <Messages messages={myMessages} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
                 }
               </div>
@@ -411,23 +445,21 @@ export default function Connected() {
               </div>
 
               {/* Input */}
-            {active === "allMessages" &&
-              <footer className='-mt-4 w-[100%] h-[10vh] bg-[#ced9de] rounded-b-lg flex justify-center gap-2'>
+              <footer className='mb-4 fixed top-[90%] w-[70%] h-[10vh] bg-[#ced9de] rounded-b-lg flex justify-center gap-2'>
                 <Image onClick={handleShowEmojis} src={emoji} alt="Smiling Emoji icon" className={`ml-1 md:ml-2 self-center hover:cursor-pointer`} />
                 <input placeholder='Send a message' onKeyDown={handleKeyDown} ref={inputRef} onChange={(e) => e.target.value} type='text' maxLength={1000} className={`self-center ${font.poppinsMedium} bg-[#f5f7fb] rounded-2xl shadow-lg mx-2 pl-4 w-[88%] h-12 border-2 border-solid border-[#d8dbe3] focus:outline-none focus:border-2 focus:border-solid focus:border-[#edf0f8] focus:transition-all focus:duration-500`} />
-                <button onClick={handleClick}> <Image src={sendMessage} alt='Send message icon' className='mr-1 md:mr-2 self-center bg-[#9bb0bb] w-8 h-8 p-1 rounded-full hover:cursor-pointer hover:bg-[#5b6063] hover:transition-all hover:duration-500' /> </button>
+                <button onClick={active === "allMessages" ? handleClick : handleSpecificMessage}> <Image src={sendMessage} alt='Send message icon' className='mr-1 md:mr-2 self-center bg-[#9bb0bb] w-8 h-8 p-1 rounded-full hover:cursor-pointer hover:bg-[#5b6063] hover:transition-all hover:duration-500' /> </button>
                 <form action="/profile" method="post" encType="multipart/form-data">
                   <Button component="label" role={undefined} variant="text" tabIndex={-1}>
                     <Image src={link} alt='File sharing link icon' className='mt-4 mr-1 self-center bg-[#9bb0bb] w-8 h-8 p-1 rounded-full hover:cursor-pointer hover:bg-[#5b6063] hover:transition-all hover:duration-500'  />
-                    <VisuallyHiddenInput type="file" onChange={handleFileChange}/>
+                    <VisuallyHiddenInput type="file" onChange={active === "allMessages" ? handleFileChange : handleSpecificFileChange}/>
                   </Button>
                 </form>
               </footer>
-            }
             </div>
 
             {/* Top/bottom cursor mover */}
-            <div className={`transition-all duration-500 fixed left-[65%] ${userPosition === "bottom" ? 'top-[80%]' : 'top-[93%]'} text-center size-12 bg-black mx-5 rounded-full animate-bounce`}>
+            <div className={`transition-all duration-500 fixed left-[65%] ${userPosition === "bottom" ? 'top-[80%]' : 'top-[83%]'} text-center size-12 bg-black mx-5 rounded-full animate-bounce`}>
               {userPosition === "top" ? 
                (<span className='text-4xl font-bold cursor-pointer text-white' onClick={navigateUser}> &#8681; </span> )
                :
@@ -466,7 +498,7 @@ export default function Connected() {
                 <div className={`overflow-y items-center flex flex-col`}>
                     {myContacts.map((user, index) => {
                       return (
-                        <div key={index} className='md:mx-2 mx-2 w-[90%] my-2 flex gap-2 mt-5 border-2 border-solid hover:bg-gray-200 border-[#d9d9d9] p-3 hover:cursor-pointer' onClick={() => handleDialogOpen(user.name, user.phone)}>
+                        <div key={index} className='md:mx-2 mx-2 w-[90%] my-2 flex gap-2 mt-5 border-2 border-solid hover:bg-gray-200 border-[#d9d9d9] p-3 hover:cursor-pointer' onClick={() => handleUserDetails(user.name, user.phone)}>
                           <div className={`text-4xl size-12 bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`}> {user.name.charAt(0)} </div>
                           <div className='flex flex-col gap-1'>
                             <p className={`${font.poppinsMedium}`}> {user.name} </p>

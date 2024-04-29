@@ -70,7 +70,7 @@ export default function Messages( {messages, nickname, onDeleteMessage, onDelete
                     ) : user.isFile ? (
                         // Condition 2: User message is a file
                         <>
-                            <span className={`text-black rounded hover:cursor-pointer ${user.name === nickname ? 'self-end right-10' : 'self-start left-10'} top-[4.8rem] relative text-3xl`} onClick={() => toggleDropdown(messageIndex)}> &#x25be; </span>
+                            <span className={`text-red-500 rounded hover:cursor-pointer ${user.name === nickname ? 'self-end right-10' : 'self-start left-10'} top-[4.8rem] relative text-3xl`} onClick={() => toggleDropdown(messageIndex)}> &#x25be; </span>
                             <div className={`mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}>   
                                 <div className={`${user.name === nickname ? 'flex justify-end md:mr-10 mr-2' : 'ml-2 md:ml-10'}`}> <FilePreview username={user.name} nickname={nickname} fileUrl={user.fileUrl ?? 'empty'} name={user.message} size={user.size}/></div>                                
                             </div>
