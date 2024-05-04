@@ -5,10 +5,21 @@ import Dropdown from './Dropdown';
 import { useState, useEffect } from 'react';
 import FilePreview from './FilePreview';
 
-export default function Messages( {userDetailsName, messages, nickname, onDeleteMessage, onDeleteForMe, onEdit, isFile} ) {
+export default function Messages( {active, userDetailsName, messages, nickname, onDeleteMessage, onDeleteForMe, onEdit, isFile} ) {
 
     const [dropdowns, setDropdowns] = useState(Array.isArray(messages) ? Array(messages.length).fill(false) : []);
     const [index, setIndex] = useState(0);
+    const [userID, setUserID] = useState('');
+
+    useEffect(() => {
+        let myDetails = JSON.parse(localStorage.getItem("myDetails"))
+        if (myDetails) {
+            console.log(myDetails.userID)
+            setUserID(myDetails.userID);
+        } else {
+            console.log("No user details found")
+        }
+    }, []);
 
     const toggleDropdown = (index) => {
         setDropdowns(prevState => {
@@ -60,31 +71,31 @@ export default function Messages( {userDetailsName, messages, nickname, onDelete
                 <>
                     {identifyLink(user.message) ? (
                     <>
-                        <span className={`hover:cursor-pointer ${user.name === nickname ? 'self-end right-10' : 'self-start left-10'} top-[4.5rem]  relative text-black text-3xl`} onClick={() => toggleDropdown(messageIndex)}> &#x25be; </span>
+                        <span className={`hover:cursor-pointer ${user.userID === userID ? 'self-end right-10' : 'self-start left-10'} top-[4.5rem]  relative text-black text-3xl`} onClick={() => toggleDropdown(messageIndex)}> &#x25be; </span>
                         <div className={`mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}>   
-                            <div className={`${user.name === nickname ? 'flex justify-end md:mr-10 mr-2' : 'ml-2 md:ml-10'}`}><Card name={user.name} nickname={nickname} messagePart={user.message.substring(0, user.message.indexOf("http"))} siteUrl={user.message.substring(user.message.indexOf("http"))} /></div>                                
+                            <div className={`${user.userID === userID ? 'flex justify-end md:mr-10 mr-2' : 'ml-2 md:ml-10'}`}><Card name={user.name} nickname={nickname} messagePart={user.message.substring(0, user.message.indexOf("http"))} siteUrl={user.message.substring(user.message.indexOf("http"))} /></div>                                
                         </div>
-                        {dropdowns[messageIndex] && <div className={`${user.name === nickname ? 'self-end mr-10 -mt-16' : 'ml-96 -mt-16'}`}> <Dropdown message={user.message} name={user.name} nickname={nickname} index={messageIndex} onDeleteClick={() => handleDeleteClick(messageIndex)} onDeleteForMe={() => handleDeleteForMe(messageIndex)} onEdit={handleEdit}/> </div>}
-                        <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name === nickname ? "You" : user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
+                        {dropdowns[messageIndex] && <div className={`${user.userID === userID ? 'self-end mr-10 -mt-16' : 'ml-96 -mt-16'}`}> <Dropdown message={user.message} userID={user.userID} name={user.name} nickname={nickname} index={messageIndex} onDeleteClick={() => handleDeleteClick(messageIndex)} onDeleteForMe={() => handleDeleteForMe(messageIndex)} onEdit={handleEdit}/> </div>}
+                        <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.userID === userID ? "self-end mr-10" : 'mx-10'} py-2`}> {user.userID === userID ? "You" : user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
                     </>
                     ) : user.isFile ? (
                         // Condition 2: User message is a file
                         <>
-                            <span className={`text-red-500 rounded hover:cursor-pointer ${user.name === nickname ? 'self-end right-10' : 'self-start left-10'} top-[4.8rem] relative text-3xl`} onClick={() => toggleDropdown(messageIndex)}> &#x25be; </span>
+                            <span className={`text-red-500 rounded hover:cursor-pointer ${user.userID === userID ? 'self-end right-10' : 'self-start left-10'} top-[4.8rem] relative text-3xl`} onClick={() => toggleDropdown(messageIndex)}> &#x25be; </span>
                             <div className={`mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}>   
-                                <div className={`${user.name === nickname ? 'flex justify-end md:mr-10 mr-2' : 'ml-2 md:ml-10'}`}> <FilePreview username={user.name} nickname={nickname} fileUrl={user.fileUrl ?? 'empty'} name={user.message} size={user.size}/></div>                                
+                                <div className={`${user.userID === userID ? 'flex justify-end md:mr-10 mr-2' : 'ml-2 md:ml-10'}`}> <FilePreview username={user.name} nickname={nickname} fileUrl={user.fileUrl ?? 'empty'} name={user.message} size={user.size}/></div>                                
                             </div>
-                            {dropdowns[messageIndex] && <div className={`${user.name === nickname ? 'self-end mr-10 -mt-16' : 'ml-96 -mt-16'}`}> <Dropdown message={user.message} name={user.name} nickname={nickname} index={messageIndex} onDeleteClick={() => handleDeleteClick(messageIndex)} onDeleteForMe={() => handleDeleteForMe(messageIndex)} onEdit={handleEdit}/> </div>}
-                            <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name === nickname ? "You" : user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
+                            {dropdowns[messageIndex] && <div className={`${user.userID === userID ? 'self-end mr-10 -mt-16' : 'ml-96 -mt-16'}`}> <Dropdown message={user.message} userID={user.userID} name={user.name} nickname={nickname} index={messageIndex} onDeleteClick={() => handleDeleteClick(messageIndex)} onDeleteForMe={() => handleDeleteForMe(messageIndex)} onEdit={handleEdit}/> </div>}
+                            <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.userID === userID ? "self-end mr-10" : 'mx-10'} py-2`}> {user.userID === userID ? "You" : user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
                         </>
                     ) : (
                     <>
-                        <div className={`w-[70%] md:w-[30%] ${user.name === nickname ? 'text-white bg-blue-500 self-end md:mr-10 mr-3' : 'text-[#737070] bg-[#D6DCE3] ml-3 md:mx-10'} mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}>
+                        <div className={`w-[70%] md:w-[30%] ${user.userID === userID ? 'text-white bg-blue-500 self-end md:mr-10 mr-3' : 'text-[#737070] bg-[#D6DCE3] ml-3 md:mx-10'} mt-5 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl`}>
                             <span className='hover:cursor-pointer mr-5 self-center float-right relative top-0' onClick={() => toggleDropdown(messageIndex)}> &#x25be; </span>
                             <p className={`break-words px-4 text-center ${font.poppinsMedium}`}> {user.message} </p>    
                         </div>
-                        {dropdowns[messageIndex] && <div className={`${user.name === nickname ? 'self-end mr-10 -mt-16' : 'ml-96 -mt-16'}`}> <Dropdown message={user.message} name={user.name} nickname={nickname} index={messageIndex} onDeleteClick={() => handleDeleteClick(messageIndex)} onDeleteForMe={() => handleDeleteForMe(messageIndex)} onEdit={handleEdit}/> </div>}
-                        <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.name === nickname ? "self-end mr-10" : 'mx-10'} py-2`}> {user.name === nickname ? "You" : user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
+                        {dropdowns[messageIndex] && <div className={`${user.userID === userID ? 'self-end mr-10 -mt-16' : 'ml-96 -mt-16'}`}> <Dropdown message={user.message} userID={user.userID} name={user.name} nickname={nickname} index={messageIndex} onDeleteClick={() => handleDeleteClick(messageIndex)} onDeleteForMe={() => handleDeleteForMe(messageIndex)} onEdit={handleEdit}/> </div>}
+                        <p className={`${font.poppinsMedium} text-[#737070] -mt-12 ${user.userID === userID ? "self-end mr-10" : 'mx-10'} py-2`}> {user.userID === userID ? "You" : user.name}, <span className='text-[#a2a2a2]'>{user.time}</span> </p>
                     </>
                     )}
                 </>
