@@ -56,6 +56,16 @@ export default function Connected() {
     }, [myName, myEmail, myUserID])        
 
     useEffect(() => {
+      const myLoginDetails = JSON.parse(localStorage.getItem('myLoginDetails'));
+      if (myLoginDetails) {
+        setMyName(myLoginDetails.name)
+        setMyEmail(myLoginDetails.email)
+        setMyUserID(myLoginDetails.userID)
+      }
+      console.log(myLoginDetails)
+    }, [])
+
+    useEffect(() => {
       setLoading(true);
       const deletedMessages = JSON.parse(localStorage.getItem('deletedMessages'));
       const myDeletedMessages = JSON.parse(localStorage.getItem('myDeletedMessages'));
