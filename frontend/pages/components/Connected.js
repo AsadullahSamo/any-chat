@@ -49,7 +49,10 @@ export default function Connected() {
     let [socket, setSocket] = useState(null);
 
     useEffect(() => {
-      localStorage.setItem('myLoginDetails', JSON.stringify({name: myName, email: myEmail, userID: myUserID}))
+      const myLoginDetails = JSON.parse(localStorage.getItem('myLoginDetails'));
+      if (!myLoginDetails) {
+        localStorage.setItem('myLoginDetails', JSON.stringify({name: myName, email: myEmail, userID: myUserID}))
+      }
     }, [myName, myEmail, myUserID])        
 
     useEffect(() => {
