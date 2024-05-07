@@ -12,7 +12,7 @@ import documentFile from '../../public/assets/icons/file-icons/txt.svg';
 import videoFile from '../../public/assets/icons/file-icons/video.svg';
 import wordFile from '../../public/assets/icons/file-icons/word.svg';
 
-export default function FilePreview({name, size, fileUrl, username, nickname}) {
+export default function FilePreview({fileUserID, name, size, fileUrl, userID}) {
 
     const [fileImage, setFileImage] = React.useState('');
     useEffect(() => {
@@ -45,7 +45,7 @@ export default function FilePreview({name, size, fileUrl, username, nickname}) {
                 </div>
                 <div className="px-6 py-4 flex gap-3 justify-between">
                     <p className={`text-green-500 text-base ${font.poppinsSemiBold}`}> {(size / (1024 * 1024)).toFixed(2)} MB </p>
-                    <Link href={fileUrl === 'empty' ? `http://localhost:8000/uploads/${name}` : (fileUrl ?? '')} download className="float-right text-blue-500 text-base hover:underline self-end"> <Image src={download} alt='download icon' width={20} height={20} className={`${username === nickname ? 'mt-1' : '-mt-6'}`} /> </Link>
+                    <Link href={fileUrl === 'empty' ? `http://localhost:8000/uploads/${name}` : (fileUrl ?? '')} download className="float-right text-blue-500 text-base hover:underline self-end"> <Image src={download} alt='download icon' width={20} height={20} className={`${fileUserID === userID ? 'mt-1' : '-mt-6'}`} /> </Link>
                 </div>
             </article>
         </React.Fragment>

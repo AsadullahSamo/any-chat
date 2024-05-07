@@ -8,14 +8,17 @@ import Link from 'next/link'
 export default function HomePage() {
 
   const [isAccount, setIsAccount] = React.useState(false)
-  const [query, setQuery] = React.useState('')
+  let [myDetails, setMyDetails] = React.useState('')
 
   useEffect(() => {
-    const myDetails = JSON.parse(localStorage.getItem('myDetails'))
-    if (myDetails) {
+    const myLoginDetails = JSON.parse(localStorage.getItem('myLoginDetails'))
+    setMyDetails(myLoginDetails)
+    if (myLoginDetails) {
       setIsAccount(true)
-      setQuery(myDetails.name)
+    } else {
+      console.log("No user details found")
     }
+    console.log(myDetails)
   }, [])
 
   return (
@@ -25,7 +28,7 @@ export default function HomePage() {
       <div className='w-[100%] h-[10%] md:min-h-screen md:w-[50%] bg-[#edf0f8]'>
         <Image src={logo} alt="any chat logo" className={`my-10 mx-10`}/>
         <h1 className={`${font.poppinsExtraBold} mt-10 md:mt-56 mx-10 text-5xl leading-normal`}> Chat <br/> anywhere <br/> with anyone </h1>
-         <Link href={isAccount ? {pathname: "/components/Connected"} : {pathname: "/components/ChatPage"}}> <button className='my-10 mx-10 text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-36 h-12 rounded-lg bg-[#434CE6]'> Get Started </button> </Link>
+         <Link href={isAccount ? {pathname: `/components/Connected`, query: {name: myDetails.name, email: myDetails.email, userID: myDetails.userID}} : {pathname: "/components/ChatPage"}}> <button className='my-10 mx-10 text-white hover:text-black font-semibold hover:border-2 hover:border-solid hover:border-[#434ce6] hover:bg-white hover:cursor-pointer hover:transition-all hover:duration-500 w-36 h-12 rounded-lg bg-[#434CE6]'> Get Started </button> </Link>
       </div>
 
 			<div className='w-[100%] h-[30%] md:min-h-screen md:w-[50%] bg-[#d8dbe3]'>

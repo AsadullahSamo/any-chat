@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import font from '../../styles/Fonts.module.css';
 
-export default function Card( { siteUrl, messagePart, name, nickname } ) {
+export default function Card( { siteUrl, messagePart} ) {
 
     const [dataFetched, setDataFetched] = useState(true);
     const [loading, setLoading] = useState(true); 

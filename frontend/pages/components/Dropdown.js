@@ -14,7 +14,7 @@ const P = styled.p`
 	}
 `;
 
-export default function Dropdown( {message, index, onDeleteClick, onDeleteForMe, onEdit, name, nickname, userID} ) {
+export default function Dropdown( {message, index, onDeleteClick, onDeleteForMe, onEdit, userID} ) {
     		
     const [open, setOpen] = useState(false);
     const theme = useTheme();
@@ -25,7 +25,7 @@ export default function Dropdown( {message, index, onDeleteClick, onDeleteForMe,
     const [fetchedUserID, setFetchedUserID] = useState('');
 
     useEffect(() => {
-        let myDetails = JSON.parse(localStorage.getItem("myDetails"))
+        let myDetails = JSON.parse(localStorage.getItem("myLoginDetails"))
         if (myDetails) {
             console.log(myDetails.userID)
             setFetchedUserID(myDetails.userID);

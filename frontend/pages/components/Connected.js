@@ -1,3 +1,5 @@
+
+import { signOut } from "next-auth/react"
 import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import logo from '../../public/assets/icons/logo.svg';
@@ -8,15 +10,11 @@ import sendMessage from '../../public/assets/icons/send-message-icon.svg';
 import link from '../../public/assets/icons/link-icon.svg';
 import { useRouter } from 'next/router';
 import style from '../../styles/Connected.module.css';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
 import Messages from './Messages';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import AlertDialog from './AlertDialog';
+import parseQueryParameters from 'parse-url-query-params'
 
 const VisuallyHiddenInput = styled('input')({
   display: 'none'
@@ -24,20 +22,18 @@ const VisuallyHiddenInput = styled('input')({
 
 export default function Connected() {
 
-    const theme = useTheme();
-    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
-    const router = useRouter();
-
     const heightRef = useRef(null);
     const sectionHeightRef = useRef(null);
     const inputRef = useRef(null);
-    const messageRef = useRef(null);
+    const router = useRouter()
 
     
     const [loading, setLoading] = useState(true);
+    const [myName, setMyName] = useState(String(parseQueryParameters(router.asPath).name).replace(/%20/g, ' '));
+    const [myEmail, setMyEmail] = useState(String(parseQueryParameters(router.asPath).email).replace(/%20/g, ' '))
+    const [myUserID, setMyUserID] = useState(String(parseQueryParameters(router.asPath).userID).replace(/%20/g, ' '))
     const [emojis, setEmojis] = useState([]);
     const [userPosition, setUserPosition] = useState("top")
-    const [selectedUser, setSelectedUser] = useState('');
     const [myMessages, setMyMessages] = useState([{name: '', message: '', time: ''}]);
     const [allMessages, setAllMessages] = useState([{name: '', message: '', time: ''}]);
     const [open, setOpen] = useState(false);
@@ -46,7 +42,6 @@ export default function Connected() {
     const [connectedUsers, setConnectedUsers] = useState([])
     const [myContacts, setMyContacts] = useState([])
     const [originalConnectedUsers, setOriginalConnectedUsers] = useState([])
-    const [nickname, setNickname] = useState(router.asPath.split('=')[1]); // ['nickname']
     const [height, setHeight] = useState(0);
     const [sectionHeight, setSectionHeight] = useState(0);
     const [showEmojis, setShowEmojis] = useState(false);
@@ -54,15 +49,8 @@ export default function Connected() {
     let [socket, setSocket] = useState(null);
 
     useEffect(() => {
-      const myDetails = JSON.parse(localStorage.getItem("myDetails"))
-      if(myDetails === null) {
-        router.push('/')
-      } else {
-        setNickname(myDetails.name)
-      }
-      
-    }, []);
-        
+      localStorage.setItem('myLoginDetails', JSON.stringify({name: myName, email: myEmail, userID: myUserID}))
+    }, [myName, myEmail, myUserID])        
 
     useEffect(() => {
       setLoading(true);
@@ -96,10 +84,6 @@ export default function Connected() {
         console.error('Error fetching data:', error);
         setLoading(false); // Clear loading state in case of an error
       });
-
-      const myDetails = JSON.parse(localStorage.getItem("myDetails"))
-      // let myContacts = JSON.parse(localStorage.getItem("myContacts")) || [];
-      // setMyContacts(myContacts)
     }, [])
 
     useEffect(() => {
@@ -117,17 +101,13 @@ export default function Connected() {
     }, [userPosition])
 
     useEffect(() => {
-      let myDetails = JSON.parse(localStorage.getItem("myDetails"))
-      if(myDetails === null) {
-        router.push('/')
-      } else {
-        fetch(`http://localhost:8000/myContacts/${myDetails.userID}`)
+        fetch(`http://localhost:8000/myContacts/${myUserID}`)
         .then(res => res.json())
         .then(data => {
           if(data.length === 0) return;
           setMyContacts(data[0].myContacts)
         })
-      }
+      // }
     }, [])
 
     useEffect(() => {
@@ -142,13 +122,12 @@ export default function Connected() {
         setConnectedUsers(prevUsers => prevUsers.filter(user => user !== name))
         setOriginalConnectedUsers(prevUsers => prevUsers.filter(user => user !== name))
       })
-
-      let myDetails = JSON.parse(localStorage.getItem("myDetails"))
-      newSocket.emit('user-connected', myDetails.name, myDetails.email, myDetails.userID)
-      newSocket.on('user-connected', (name) => {
-        setConnectedUsers(name)
-        setOriginalConnectedUsers(name)
-      })
+        newSocket.emit('user-connected', myName, myEmail, myUserID)
+        newSocket.on('user-connected', (name) => {
+          setConnectedUsers(name)
+          setOriginalConnectedUsers(name)
+        })
+      // }
 
       return () => {
         newSocket.disconnect();
@@ -159,11 +138,11 @@ export default function Connected() {
     useEffect(() => {
       if (!socket) return;
 
-      socket.on('receive-message', (isFile, message, nickname, time, size, userID) => {
+      socket.on('receive-message', (isFile, message, myName, time, size, userID) => {
         if(isFile === true) {
-          setData([...data, {name: nickname, message: message, size: size, isFile: true, time: time, userID: userID}]);
+          setData([...data, {name: myName, message: message, size: size, isFile: true, time: time, userID: userID}]);
         } else {
-          setData([...data, {name: nickname, message: message, size: 0, isFile: false, time: time, userID: userID}]);
+          setData([...data, {name: myName, message: message, size: 0, isFile: false, time: time, userID: userID}]);
         }
       });
 
@@ -176,21 +155,14 @@ export default function Connected() {
     useEffect(() => {
       if (!socket) return;
 
-      const handleReceivedMessage = (message, nickname, time) => {
-        setMyMessages([...myMessages, {name: nickname, message: message, time: time}]);
-      };
-
-      socket.on('send-message-to-user', (isFile, message, nickname, time, size, senderUserID) => {
+      socket.on('send-message-to-user', (isFile, message, myName, time, size, senderUserID) => {
         if(isFile === true) {
-          setMyMessages([...myMessages, {name: nickname, message: message, size: size, isFile: true, time: time, userID: senderUserID}]);
+          setMyMessages([...myMessages, {name: myName, message: message, size: size, isFile: true, time: time, userID: senderUserID}]);
         } else {
-          setMyMessages([...myMessages, {name: nickname, message: message, size: 0, isFile: false, time: time, userID: senderUserID}]);
+          setMyMessages([...myMessages, {name: myName, message: message, size: 0, isFile: false, time: time, userID: senderUserID}]);
         }
       });
 
-      return () => {
-          socket.off('send-message-to-user', handleReceivedMessage);
-      };
     }, [socket, myMessages]);
 
     useEffect(() => {
@@ -219,13 +191,10 @@ export default function Connected() {
 
     const deleteMessageForMe = (index) => {
       if(active === "allMessages") {
-        // socket.emit('delete-message-for-me', data[index].message, data[index].time, "allMessages", nickname);
         setData(prevData => prevData.filter((message, i) => message.message !== data[index].message && message.time !== data[index].time));
         const deletedMessages = JSON.parse(localStorage.getItem('deletedMessages')) || [];
         localStorage.setItem('deletedMessages', JSON.stringify([...deletedMessages, [data[index].message, data[index].time]]))
       } else {
-        // let myDetails = JSON.parse(localStorage.getItem("myDetails"))
-        // socket.emit('delete-message-for-me', myDetails.phone, myMessages[index].message, myMessages[index].time, "myMessages", nickname);
         setMyMessages(prevData => prevData.filter((message, i) => message.message !== myMessages[index].message && message.time !== myMessages[index].time));
         const myDeletedMessages = JSON.parse(localStorage.getItem('myDeletedMessages')) || [];
         localStorage.setItem('myDeletedMessages', JSON.stringify([...myDeletedMessages, [myMessages[index].message, myMessages[index].time]]))
@@ -234,12 +203,12 @@ export default function Connected() {
 
     const deleteMessageForEveryone = (index) => {
       if(active === "allMessages") {
-        if(data[index].name !== nickname) return;
-        socket.emit('delete-message', index, data[index]._id, "allMessages", nickname, data[index].message, data[index].time);
+        if(data[index].name !== myName) return;
+        socket.emit('delete-message', index, data[index]._id, "allMessages", myName, data[index].message, data[index].time);
         setData(prevData => prevData.filter((message, i) => message.message !== data[index].message && message.time !== data[index].time));
       } else {
-        if(myMessages[index].name !== nickname) return;
-        socket.emit('delete-message', index, myMessages[index]._id, "myMessages", nickname, myMessages[index].message, myMessages[index].time);
+        if(myMessages[index].name !== myName) return;
+        socket.emit('delete-message', index, myMessages[index]._id, "myMessages", myName, myMessages[index].message, myMessages[index].time);
         setMyMessages(prevData => prevData.filter((message, i) => message.message !== myMessages[index].message && message.time !== myMessages[index].time));
       }
     } // end of handleDeletedMessage
@@ -256,20 +225,18 @@ export default function Connected() {
 
     const handleClick = () => {
       if(inputRef.current.value === '') return;
-      let myDetails = JSON.parse(localStorage.getItem("myDetails"))
-      socket.emit('send-message', false, 0, '', inputRef.current.value, nickname, `${new Date().toLocaleString()}`, myDetails.userID );
+      socket.emit('send-message', false, 0, '', inputRef.current.value, myName, `${new Date().toLocaleString()}`, myUserID );
       setHeight(heightRef.current.clientHeight + 10);
-      setData([...data, {name: nickname, message: inputRef.current.value, size: 0, isFile: false, time: `${new Date().toLocaleString()}`, userID: myDetails.userID}])
+      setData([...data, {name: myName, message: inputRef.current.value, size: 0, isFile: false, time: `${new Date().toLocaleString()}`, userID: myUserID}])
       inputRef.current.value = '';
     }; // end of handleClick
 
     const handleSpecificMessage = () => {
       const message = inputRef.current.value;
       if(inputRef.current.value === '') return;
-      const myDetails = JSON.parse(localStorage.getItem("myDetails"))
-      socket.emit('send-message-to-user', false, 0, '', inputRef.current.value, myDetails.name, `${new Date().toLocaleString()}`, userDetails.userID, myDetails.userID)
+      socket.emit('send-message-to-user', false, 0, '', inputRef.current.value, myName, `${new Date().toLocaleString()}`, userDetails.userID, myUserID)
       setHeight(heightRef.current.clientHeight + 10);
-      setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: message, size: 0, isFile: false, time: `${new Date().toLocaleString()}`, userID: myDetails.userID}])
+      setMyMessages(prevMessages => [...prevMessages, {name: myName, message: message, size: 0, isFile: false, time: `${new Date().toLocaleString()}`, userID: myUserID}])
       inputRef.current.value = '';
     } // end of handleSpecificMessage
       
@@ -322,7 +289,6 @@ export default function Connected() {
     const handleFileChange = (e) => {
         const formData = new FormData();
         formData.append("file", e.target.files[0]);
-        let myDetails = JSON.parse(localStorage.getItem("myDetails"))
         fetch('http://localhost:8000/upload', {
             method: 'POST',
             body: formData,
@@ -331,9 +297,8 @@ export default function Connected() {
         .then(data => console.log(data))
         .catch(error => console.error('Error:', error));
 
-        socket.emit('send-message', true, e.target.files[0].size, e.target.files[0].name, e.target.files[0].name, nickname, `${new Date().toLocaleString()}`);
-        setData([...data, {name: nickname, message: e.target.files[0].name, size: e.target.files[0].size, isFile: true, time: `${new Date().toLocaleString()}`, userID: myDetails.userID}])
-        
+        socket.emit('send-message', true, e.target.files[0].size, e.target.files[0].name, e.target.files[0].name, myName, `${new Date().toLocaleString()}`, myUserID);
+        setData([...data, {name: myName, message: e.target.files[0].name, size: e.target.files[0].size, isFile: true, time: `${new Date().toLocaleString()}`, userID: myUserID}])       
         setOpen(false);
     }
 
@@ -349,36 +314,30 @@ export default function Connected() {
         .then(data => console.log(data))
         .catch(error => console.error('Error:', error));
 
-        let myDetails = JSON.parse(localStorage.getItem("myDetails"))
-        socket.emit('send-message-to-user', true, e.target.files[0].size, e.target.files[0].name, e.target.files[0].name, nickname, `${new Date().toLocaleString()}`, userDetails.userID, myDetails.userID)
-        setMyMessages(prevMessages => [...prevMessages, {name: nickname, message: e.target.files[0].name, size: e.target.files[0].size, isFile: true, time: `${new Date().toLocaleString()}`, userID: myDetails.userID}])
+        socket.emit('send-message-to-user', true, e.target.files[0].size, e.target.files[0].name, e.target.files[0].name, myName, `${new Date().toLocaleString()}`, userDetails.userID, myUserID)
+        setMyMessages(prevMessages => [...prevMessages, {name: myName, message: e.target.files[0].name, size: e.target.files[0].size, isFile: true, time: `${new Date().toLocaleString()}`, userID: myUserID}])
         setOpen(false);
     } // end of handleSpecificFileChange
 
     const hanldeUserAddition = (details) => {
-      let myDetails = JSON.parse(localStorage.getItem("myDetails"))
-      socket.emit("contact-added", details.name, details.userID, myDetails.userID)
-      // let myContacts = JSON.parse(localStorage.getItem("myContacts")) || [];
+      socket.emit("contact-added", details.name, details.userID, myUserID)
       if(myContacts.some(contact => contact.userID === details.userID)) return;
-      // localStorage.setItem("myContacts", JSON.stringify([...myContacts, {name: details.name, userID: details.userID}]) )
       setMyContacts([...myContacts, {name: details.name, userID: details.userID}])
     } // end of hanldeUserAddition
 
     const handleUserDetails = (name, userID) => {
-      setSelectedUser(name)
       setUserDetails({name, userID})
-      let myDetails = JSON.parse(localStorage.getItem("myDetails"))
       let myDeletedMessages = JSON.parse(localStorage.getItem("myDeletedMessages")) || [];
-      socket.emit('user-details', myDetails.userID, name, userID, myDeletedMessages)
+      socket.emit('user-details', myUserID, name, userID, myDeletedMessages)
     } // end of handleUserDetails
-    
-    const handleChange = (e) => {
-      if(userDetails.name === '') return;
-      setValue(e.target.value)
-    } // end of handleChange
 
     const handleUserId = () => {
       setActive("user-id")
+    }
+
+    const handleSignOut = () => {
+     localStorage.removeItem('myLoginDetails')
+     signOut({ callbackUrl: 'http://localhost:3000'})
     }
     
     return (
@@ -391,6 +350,7 @@ export default function Connected() {
           <main className="min-h-screen bg-[#edf0f8]">
           <header className="flex justify-between items-center pt-10 mx-10 mb-5">
             <Image src={logo} alt='Any chat application logo' className="clear-right" />
+            <button className={`mt-2 ${font.poppinsSemiBold} text-white hover:text-black hover:cursor-pointer hover:transition-all hover:duration-700 text-xl text-center mx-auto -mt-10 rounded-xl w-[10%] h-12 bg-[#9CAEBC] hover:bg-white hover:border-2 hover:border-solid hover:border-[#9CAEBC] `} onClick={handleSignOut}> Sign out </button>  
             <p className="text-2xl"> Online: {connectedUsers.length} </p>
           </header>
 
@@ -403,7 +363,6 @@ export default function Connected() {
                     <p className={`text-5xl size-[60px] bg-gray-500 hover:cursor-pointer hover:bg-green-300 hover:transition-all hover:duration-500 text-white text-center rounded-full mt-[2px]`}> {userDetails.name.charAt(0) || 'A'} </p>
                     <div className='flex flex-col gap-1'>
                       <p className={`mt-1 text-black text-xl ${font.poppinsMedium} self-center`}> {userDetails.name || 'All my messages'} </p>
-                      <p className={`text-black ${font.poppinsRegular}`}> {userDetails.phone || JSON.parse(localStorage.getItem("myDetails")).phone} </p>
                     </div>
                   </div>
                 </div>
@@ -422,11 +381,11 @@ export default function Connected() {
                   <p className={`${font.poppinsRegular} text-center text-2xl`}> Select a user to text them OR to view their messages OR your messages sent to them, if any</p>
                 }
                 {active === "allMessages" ?
-                  <Messages active="allMessages" messages={data} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
+                  <Messages userID={myUserID} active="allMessages" messages={data} nickname={myName} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
                 : active === "myMessages" ?
-                  <Messages active="myMessages" userDetailsName={userDetails.name} messages={myMessages} nickname={nickname} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
+                  <Messages userID={myUserID} active="myMessages" userDetailsName={userDetails.name} messages={myMessages} nickname={myName} onDeleteMessage={deleteMessageForEveryone} onDeleteForMe={deleteMessageForMe} onEdit={handleEdit}/>
                 :
-                  <p className={`${font.poppinsRegular} text-center text-2xl`}> Your user id is {JSON.parse(localStorage.getItem("myDetails")).userID}</p>
+                  <p className={`${font.poppinsRegular} text-center text-2xl`}> Your user id is {JSON.parse(localStorage.getItem("myLoginDetails")).userID}</p>
                 }
               </div>
 

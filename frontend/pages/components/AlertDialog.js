@@ -41,10 +41,6 @@ export default function AlertDialog({onAddDetails}) {
       handleMessage('Please fill in all the fields')
       return
     }
-    // if(phone.includes(' ')) {
-    //   handleMessage('Phone number cannot contain spaces')
-    //   return
-    // }
     else if(myContacts.includes(userID)) {
       handleMessage('The user already exists in the contacts list. Please enter a different contact.')
       return
